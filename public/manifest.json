@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Chrome Extensions Template",
+  "description": "Base Level Extension Template",
+  "version": "1.0",
+  "page_action": {
+    "default_popup": "index.html",
+    "default_icon": "icon-32.png"
+  },
+	"content_scripts": [{
+		"mathes": ["https://twitch.tv/*"],
+		"js": ["content.js"]
+	}],
+	"background": {
+		"scripts": ["background.js"]
+	}
+}

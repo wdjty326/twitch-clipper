@@ -4,6 +4,7 @@
 		"module": "CommonJS",
 		"target": "ES2015",
 		"esModuleInterop": true,
+		"jsx": "react-jsx",
 		"sourceMap": false,
 		"rootDir": "src",
 		"outDir": "dist/js",

@@ -1,15 +1,12 @@
-let active = false;
-
-function makeOrange(color: string): void {
-	document.body.style.backgroundColor = color;
-}
-
-chrome.action.onClicked.addListener((tab) => {
-	active = !active;
-	const color = active ? 'orange' : 'white';
-	chrome.scripting.executeScript({
-		target: { tabId: tab.id ? tab.id : -1 },
-		func: makeOrange,
-		args: [color]
-	}).then();
+chrome.runtime.onInstalled.addListener(function () {
+//  chrome.contextMenus.create({
+//    id: "sampleContextMenu",
+//    title: "Sample Context Menu",
+//    contexts: ["selection"],
+//  });
 });
+
+//// This will run when a bookmark is created.
+//chrome.bookmarks.onCreated.addListener(function () {
+//  // do something
+//});

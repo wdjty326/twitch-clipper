@@ -4,7 +4,8 @@
   "description": "Base Level Extension Template",
   "main": "dist/background.js",
   "scripts": {
-    "build": "node script/build"
+    "build": "node script/build",
+		"test": "webpack --config config/webpack.popup.js"
   },
   "author": "",
   "license": "ISC",
@@ -21,6 +22,7 @@
     "ts-loader": "^9.4.2",
     "typescript": "^4.9.4",
     "webpack": "^5.75.0",
-    "webpack-cli": "^5.0.1"
+    "webpack-cli": "^5.0.1",
+    "webpack-merge": "^5.8.0"
   }
 }

@@ -1,23 +1,14 @@
 const path = require("path");
-const webpack = require("webpack");
+const { merge } = require("webpack-merge");
+
+const common = require("./webpack.common.js");
 
 const copyWebpackPlugin = require("copy-webpack-plugin");
 const htmlWebpackPlugin = require("html-webpack-plugin");
 
-const ASSET_PATH = process.env.ASSET_PATH || "/";
-
-module.exports = {
-  mode: "production",
+module.exports = merge(common, {
   entry: {
     popup: path.resolve(__dirname, "..", "src", "popup", "index.tsx"),
-  },
-  output: {
-    path: path.join(__dirname, "..", "dist"),
-    publicPath: ASSET_PATH,
-    filename: "[name].js",
-  },
-  resolve: {
-    extensions: [".ts", ".tsx", ".js", ".jsx"],
   },
   optimization: {
     splitChunks: {
@@ -42,34 +33,18 @@ module.exports = {
       },
     },
   },
-  module: {
-    rules: [
-      {
-        test: /\.tsx?$/,
-        loader: "ts-loader",
-        exclude: /node_modules/,
-      },
-    ],
-  },
   plugins: [
     new copyWebpackPlugin({
       patterns: [
         {
-          from: path.resolve(__dirname, "..", "public", "manifest.json"),
+          from: path.resolve(__dirname, "..", "public"),
           to: "",
-        },
-        {
-          from: path.resolve(__dirname, "..", "public", "icon-32.png"),
-          to: "",
-        },
+        }
       ],
-    }),
-    new webpack.DefinePlugin({
-      "process.env.ASSET_PATH": ASSET_PATH,
     }),
     new htmlWebpackPlugin({
       filename: "index.html",
-      template: path.resolve(__dirname, "..", "public", "index.html"),
+      template: path.resolve(__dirname, "..", "index.html"),
     }),
   ],
-};
+});

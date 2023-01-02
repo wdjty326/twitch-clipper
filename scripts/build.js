@@ -3,6 +3,8 @@ const fs = require("fs");
 const os = require("os");
 const { execSync } = require("child_process");
 
+process.env.NODE_ENV = "production";
+
 const execWebpack = async (name) => {
   const stdout = execSync(`webpack --config config/webpack.${name}.js`, {
     cwd: path.resolve(__dirname, ".."),

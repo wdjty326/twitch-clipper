@@ -5,10 +5,19 @@ const common = require("./webpack.common.js");
 
 const copyWebpackPlugin = require("copy-webpack-plugin");
 const htmlWebpackPlugin = require("html-webpack-plugin");
+const miniCssExtractPlugin = require("mini-css-extract-plugin");
 
 module.exports = merge(common, {
   entry: {
     popup: path.resolve(__dirname, "..", "src", "popup", "index.tsx"),
+  },
+  module: {
+    rules: [
+      {
+        test: /\.css$/i,
+        use: [miniCssExtractPlugin.loader, "css-loader"],
+      },
+    ],
   },
   optimization: {
     splitChunks: {
@@ -34,12 +43,17 @@ module.exports = merge(common, {
     },
   },
   plugins: [
+    new miniCssExtractPlugin({
+      linkType: "text/css",
+      filename: "[name].css",
+      chunkFilename: "[id].css",
+    }),
     new copyWebpackPlugin({
       patterns: [
         {
           from: path.resolve(__dirname, "..", "public"),
           to: "",
-        }
+        },
       ],
     }),
     new htmlWebpackPlugin({

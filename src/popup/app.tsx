@@ -1,7 +1,16 @@
 import { FunctionComponent } from "react";
 
-const App: FunctionComponent = () => <div>
-	<h1>Hello World</h1>
-</div>
+const App: FunctionComponent = () => (
+  <div>
+    <header>
+      <h1>Chrome Extensions Template</h1>
+    </header>
+    <main>
+      <article>
+        <p>크롬 확장프로그램 탬플릿 입니다.</p>
+      </article>
+    </main>
+  </div>
+);
 
 export default App;

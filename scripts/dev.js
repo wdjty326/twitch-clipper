@@ -1,7 +1,5 @@
 const path = require("path");
 const fs = require("fs");
-const os = require("os");
-const { execSync } = require("child_process");
 
 const webpack = require("webpack");
 const webpackDevServer = require("webpack-dev-server");
@@ -13,7 +11,56 @@ const popupConfig = require("../config/webpack.popup");
 
 process.env.NODE_ENV = "development";
 
+const popupIndex = `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <iframe src="http://localhost:9080" width="340" height="580" style="border:none"></iframe>
+  </body>
+</html>`;
+
+const manifestString = JSON.stringify({
+  manifest_version: 3,
+  name: "Chrome Extensions Template Test",
+  description: "Base Level Extension Template Test",
+  version: "1.0",
+  permissions: ["bookmarks", "contextMenus"],
+  action: {
+    default_popup: "index.html"
+  },
+  content_scripts: [
+    {
+      matches: ["https://twitch.tv/*"],
+      js: ["contents.js"],
+    },
+  ],
+  background: {
+    service_worker: "background.js",
+  },
+});
+
 function startPopup() {
+  if (!fs.existsSync(path.resolve(__dirname, "..", "dist")))
+    fs.mkdirSync(path.resolve(__dirname, "..", "dist"));
+
+  fs.writeFileSync(
+    path.resolve(__dirname, "..", "dist", "index.html"),
+    popupIndex,
+    {
+      encoding: "utf-8",
+    }
+  );
+
+  fs.writeFileSync(
+    path.resolve(__dirname, "..", "dist", "manifest.json"),
+    manifestString,
+    {
+      encoding: "utf-8",
+    }
+  );
+
   return new Promise((resolve, reject) => {
     const compiler = webpack(popupConfig);
     const hotMiddleware = webpackHotMiddleware(compiler, {
@@ -21,28 +68,19 @@ function startPopup() {
       heartbeat: 2500,
     });
 
-    //compiler.hooks.compilation.tap("compilation", (compilation) => {
-    //  compilation.hooks.htmlWebpackPluginAfterEmit.tapAsync(
-    //    "html-webpack-plugin-after-emit",
-    //    (data, cb) => {
-    //      hotMiddleware.publish({ action: "reload" });
-    //      cb();
-    //    }
-    //  );
-    //});
+    const server = new webpackDevServer(compiler, {
+      static: {
+        directory: path.join(__dirname, ".."),
+      },
+      onBeforeSetupMiddleware({ app, middleware }) {
+        app.use(hotMiddleware);
+        middleware.waitUntilValid(() => {
+          resolve();
+        });
+      },
+    });
 
-    //const server = new webpackDevServer(compiler, {
-    //  contentBase: path.join(__dirname, ".."),
-    //  quiet: true,
-    //  before(app, ctx) {
-    //    app.use(hotMiddleware);
-    //    ctx.middleware.waitUntilValid(() => {
-    //      resolve();
-    //    });
-    //  },
-    //});
-
-    //server.listen(9080);
+    server.listen(9080);
   });
 }
 

@@ -17,6 +17,7 @@
     "@types/chrome": "0.0.206",
     "@types/react": "^18.0.26",
     "@types/react-dom": "^18.0.10",
+    "@types/webpack-env": "^1.18.0",
     "copy-webpack-plugin": "^11.0.0",
     "css-loader": "^6.7.3",
     "ejs": "^3.1.8",

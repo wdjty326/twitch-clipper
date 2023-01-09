@@ -1,15 +1,16 @@
+process.env.NODE_ENV = "development";
+
 const path = require("path");
 const fs = require("fs");
 
 const webpack = require("webpack");
 const webpackDevServer = require("webpack-dev-server");
 const webpackHotMiddleware = require("webpack-hot-middleware");
+const { merge } = require("webpack-merge");
 
 const backgroundConfig = require("../config/webpack.background");
 const contentsConfig = require("../config/webpack.contents");
 const popupConfig = require("../config/webpack.popup");
-
-process.env.NODE_ENV = "development";
 
 const popupIndex = `<!DOCTYPE html>
 <html>
@@ -28,7 +29,7 @@ const manifestString = JSON.stringify({
   version: "1.0",
   permissions: ["bookmarks", "contextMenus"],
   action: {
-    default_popup: "index.html"
+    default_popup: "index.html",
   },
   content_scripts: [
     {
@@ -38,6 +39,9 @@ const manifestString = JSON.stringify({
   ],
   background: {
     service_worker: "background.js",
+  },
+  content_security_policy: {
+    extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'",
   },
 });
 
@@ -89,6 +93,7 @@ function startBackground() {
     const compiler = webpack(backgroundConfig);
     const hotMiddleware = webpackHotMiddleware(compiler, {
       log: false,
+      path: "/__background",
       heartbeat: 2500,
     });
 
@@ -113,6 +118,7 @@ function startContents() {
     const compiler = webpack(contentsConfig);
     const hotMiddleware = webpackHotMiddleware(compiler, {
       log: false,
+      path: "/__contents",
       heartbeat: 2500,
     });
 

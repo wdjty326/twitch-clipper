@@ -21,6 +21,9 @@
 			]
 		}
 	],
+	"host_permissions": [
+		"https://twitch.tv/*"
+	],
 	"background": {
 		"service_worker": "background.js"
 	}

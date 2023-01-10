@@ -10,7 +10,6 @@ const miniCssExtractPlugin = require("mini-css-extract-plugin");
 module.exports = merge(
   common,
   {
-	name: "popup",
     entry: {
       popup: path.resolve(__dirname, "..", "src", "popup", "index.tsx"),
     },
@@ -60,7 +59,7 @@ module.exports = merge(
         ],
       }),
       new htmlWebpackPlugin({
-        filename: "[name].html",
+        filename: "index.html",
         template: path.resolve(__dirname, "..", "index.html"),
       }),
     ],

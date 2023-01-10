@@ -89,28 +89,73 @@ function startPopup() {
 }
 
 function startBackground() {
-  return new Promise((resolve, reject) => {
-    const compiler = webpack(backgroundConfig);
+  const watchRun = new Promise((resolve) => {
+    const ansiColors = {
+      red: "00FF00",
+    };
+    const overlayStyles = {
+      color: "#FF0000",
+    };
+
+    const compiler = webpack(
+      merge(backgroundConfig, {
+        entry: {
+          background: [
+            //"webpack-hot-middleware/client?path=/__background&timeout=20000&reload=true&ansiColors=" +
+            //  encodeURIComponent(JSON.stringify(ansiColors)) +
+            //  "&overlayStyles=" +
+            //  encodeURIComponent(JSON.stringify(overlayStyles)),
+            path.resolve(__dirname, "..", "src", "background", "index.ts"),
+          ],
+        },
+        devtool: "source-map",
+        plugins: [new webpack.HotModuleReplacementPlugin()],
+      })
+    );
     const hotMiddleware = webpackHotMiddleware(compiler, {
       log: false,
       path: "/__background",
       heartbeat: 2500,
     });
 
-    compiler.hooks.watchRun.tapAsync("watch-run", (compilation, done) => {
+    compiler.hooks.watchRun.tapAsync("watch-run", (_, done) => {
       hotMiddleware.publish({ action: "compiling" });
       done();
     });
 
-    compiler.watch({}, (err, stats) => {
+    compiler.watch({}, (err) => {
       if (err) {
         console.log(err);
         return;
       }
-
       resolve();
     });
   });
+
+  const webSocketServer = new Promise((resolve) => {
+    const compiler = webpack(backgroundConfig);
+    const hotMiddleware = webpackHotMiddleware(compiler, {
+      log: false,
+      heartbeat: 2500,
+    });
+
+    const server = new webpackDevServer(compiler, {
+      static: {
+        directory: path.join(__dirname, ".."),
+      },
+      webSocketServer: "ws",
+      onBeforeSetupMiddleware({ app, middleware }) {
+        app.use(hotMiddleware);
+        middleware.waitUntilValid(() => {
+          resolve();
+        });
+      },
+    });
+
+    server.listen(9081);
+  });
+
+  return Promise.all([watchRun, webSocketServer]);
 }
 
 function startContents() {

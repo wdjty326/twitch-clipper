@@ -12,21 +12,5 @@ const overlayStyles = {
 };
 
 module.exports = merge(common, {
-  entry: {
-    background:
-      process.env.NODE_ENV === "development"
-        ? [
-            "webpack-hot-middleware/client?path=/__background&timeout=20000&reload=true&ansiColors=" +
-              encodeURIComponent(JSON.stringify(ansiColors)) +
-              "&overlayStyles=" +
-              encodeURIComponent(JSON.stringify(overlayStyles)),
-            path.resolve(__dirname, "..", "src", "background", "index.ts"),
-          ]
-        : path.resolve(__dirname, "..", "src", "background", "index.ts"),
-  },
-  devtool: process.env.NODE_ENV === "development" ? false : "source-map",
-  plugins:
-    process.env.NODE_ENV === "development"
-      ? [new webpack.HotModuleReplacementPlugin()]
-      : [],
+  entry: path.resolve(__dirname, "..", "src", "background", "index.ts"),
 });

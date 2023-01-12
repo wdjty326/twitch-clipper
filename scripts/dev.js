@@ -2,6 +2,7 @@ process.env.NODE_ENV = "development";
 
 const path = require("path");
 const fs = require("fs");
+const { WebSocketServer, WebSocket } = require("ws");
 
 const webpack = require("webpack");
 const webpackDevServer = require("webpack-dev-server");
@@ -45,7 +46,7 @@ const manifestString = JSON.stringify({
   },
 });
 
-function startPopup() {
+function initPopup() {
   if (!fs.existsSync(path.resolve(__dirname, "..", "dist")))
     fs.mkdirSync(path.resolve(__dirname, "..", "dist"));
 
@@ -88,8 +89,25 @@ function startPopup() {
   });
 }
 
-function startBackground() {
-  const watchRun = new Promise((resolve) => {
+function initBackground() {
+  const wss = new WebSocketServer({
+    port: 9081,
+    path: "/ws",
+  });
+
+  wss.on("connection", (ws) => {
+    ws.on("message", (data, isBinary) => {
+      wss.clients.forEach((client) => {
+        if (client === ws && client.readyState === WebSocket.OPEN) {
+          if (!isBinary && data.toString() === "#PING") {
+            client.send("#PONG", { binary: false });
+          }
+        }
+      });
+    });
+  });
+
+  return new Promise((resolve) => {
     const ansiColors = {
       red: "00FF00",
     };
@@ -101,10 +119,10 @@ function startBackground() {
       merge(backgroundConfig, {
         entry: {
           background: [
-            //"webpack-hot-middleware/client?path=/__background&timeout=20000&reload=true&ansiColors=" +
-            //  encodeURIComponent(JSON.stringify(ansiColors)) +
-            //  "&overlayStyles=" +
-            //  encodeURIComponent(JSON.stringify(overlayStyles)),
+            "webpack-hot-middleware/client?path=/__background&timeout=20000&reload=true&ansiColors=" +
+              encodeURIComponent(JSON.stringify(ansiColors)) +
+              "&overlayStyles=" +
+              encodeURIComponent(JSON.stringify(overlayStyles)),
             path.resolve(__dirname, "..", "src", "background", "index.ts"),
           ],
         },
@@ -112,6 +130,7 @@ function startBackground() {
         plugins: [new webpack.HotModuleReplacementPlugin()],
       })
     );
+
     const hotMiddleware = webpackHotMiddleware(compiler, {
       log: false,
       path: "/__background",
@@ -123,42 +142,41 @@ function startBackground() {
       done();
     });
 
-    compiler.watch({}, (err) => {
-      if (err) {
-        console.log(err);
-        return;
-      }
-      resolve();
-    });
-  });
-
-  const webSocketServer = new Promise((resolve) => {
-    const compiler = webpack(backgroundConfig);
-    const hotMiddleware = webpackHotMiddleware(compiler, {
-      log: false,
-      heartbeat: 2500,
-    });
-
-    const server = new webpackDevServer(compiler, {
-      static: {
-        directory: path.join(__dirname, ".."),
+    compiler.watch(
+      {
+        ignored: ["**/node_modules/**", "src/contents/**/*", "src/popup/**/*"],
+        aggregateTimeout: 1000,
       },
-      webSocketServer: "ws",
-      onBeforeSetupMiddleware({ app, middleware }) {
-        app.use(hotMiddleware);
-        middleware.waitUntilValid(() => {
-          resolve();
+      (err, state) => {
+        if (err) {
+          console.log(err);
+          return;
+        }
+
+        Object.keys(state.compilation.assets).map((fileName) => {
+          if (fileName !== "background.js") {
+            const filePath = path.resolve(__dirname, "..", "dist", fileName);
+            if (fs.existsSync(filePath)) {
+              fs.rmSync(filePath, { force: true });
+            }
+          }
         });
-      },
-    });
 
-    server.listen(9081);
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send("#BLOCK", {
+              binary: false,
+            });
+          }
+        });
+
+        resolve();
+      }
+    );
   });
-
-  return Promise.all([watchRun, webSocketServer]);
 }
 
-function startContents() {
+function initContents() {
   return new Promise((resolve, reject) => {
     const compiler = webpack(contentsConfig);
     const hotMiddleware = webpackHotMiddleware(compiler, {
@@ -183,10 +201,10 @@ function startContents() {
   });
 }
 
-function init() {
-  Promise.all([startBackground(), startContents(), startPopup()]).then(
-    () => {}
-  );
+async function init() {
+  await initBackground();
+  await initContents();
+  await initPopup();
 }
 
 init();

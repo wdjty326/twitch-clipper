@@ -28,16 +28,17 @@ const manifestString = JSON.stringify({
   name: "Chrome Extensions Template Test",
   description: "Base Level Extension Template Test",
   version: "1.0",
-  permissions: ["bookmarks", "contextMenus"],
+  permissions: ["activeTab", "background", "tabs"],
   action: {
     default_popup: "index.html",
   },
-  content_scripts: [
-    {
-      matches: ["https://twitch.tv/*"],
-      js: ["contents.js"],
-    },
-  ],
+    content_scripts: [
+      {
+        matches: ["https://www.twitch.tv/lilpaaaaaa"],
+        js: ["contents.js"],
+      },
+    ],
+  host_permissions: ["https://www.twitch.tv/"],
   background: {
     service_worker: "background.js",
   },
@@ -45,6 +46,30 @@ const manifestString = JSON.stringify({
     extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'",
   },
 });
+
+const wss = new WebSocketServer({
+  port: 9081,
+  path: "/ws",
+});
+
+wss.on("connection", (ws) => {
+  ws.on("message", (data, isBinary) => {
+    wss.clients.forEach((client) => {
+      if (client === ws && client.readyState === WebSocket.OPEN) {
+        if (!isBinary && data.toString() === "#PING") {
+          client.send("#PONG", { binary: false });
+        }
+      }
+    });
+  });
+});
+
+const ansiColors = {
+  red: "00FF00",
+};
+const overlayStyles = {
+  color: "#FF0000",
+};
 
 function initPopup() {
   if (!fs.existsSync(path.resolve(__dirname, "..", "dist")))
@@ -90,31 +115,7 @@ function initPopup() {
 }
 
 function initBackground() {
-  const wss = new WebSocketServer({
-    port: 9081,
-    path: "/ws",
-  });
-
-  wss.on("connection", (ws) => {
-    ws.on("message", (data, isBinary) => {
-      wss.clients.forEach((client) => {
-        if (client === ws && client.readyState === WebSocket.OPEN) {
-          if (!isBinary && data.toString() === "#PING") {
-            client.send("#PONG", { binary: false });
-          }
-        }
-      });
-    });
-  });
-
   return new Promise((resolve) => {
-    const ansiColors = {
-      red: "00FF00",
-    };
-    const overlayStyles = {
-      color: "#FF0000",
-    };
-
     const compiler = webpack(
       merge(backgroundConfig, {
         entry: {
@@ -154,7 +155,10 @@ function initBackground() {
         }
 
         Object.keys(state.compilation.assets).map((fileName) => {
-          if (fileName !== "background.js") {
+          if (
+            fileName.lastIndexOf(".map") !== -1 ||
+            fileName.includes("hot-update")
+          ) {
             const filePath = path.resolve(__dirname, "..", "dist", fileName);
             if (fs.existsSync(filePath)) {
               fs.rmSync(filePath, { force: true });
@@ -164,7 +168,7 @@ function initBackground() {
 
         wss.clients.forEach((client) => {
           if (client.readyState === WebSocket.OPEN) {
-            client.send("#BLOCK", {
+            client.send("#BACKGROUND", {
               binary: false,
             });
           }
@@ -178,26 +182,71 @@ function initBackground() {
 
 function initContents() {
   return new Promise((resolve, reject) => {
-    const compiler = webpack(contentsConfig);
+    const compiler = webpack(
+      merge(contentsConfig, {
+        entry: {
+          background: [
+            "webpack-hot-middleware/client?path=/__contents&timeout=20000&reload=true&ansiColors=" +
+              encodeURIComponent(JSON.stringify(ansiColors)) +
+              "&overlayStyles=" +
+              encodeURIComponent(JSON.stringify(overlayStyles)),
+            path.resolve(__dirname, "..", "src", "background", "index.ts"),
+          ],
+        },
+        devtool: "source-map",
+        plugins: [new webpack.HotModuleReplacementPlugin()],
+      })
+    );
+
     const hotMiddleware = webpackHotMiddleware(compiler, {
       log: false,
       path: "/__contents",
       heartbeat: 2500,
     });
 
-    compiler.hooks.watchRun.tapAsync("watch-run", (compilation, done) => {
+    compiler.hooks.watchRun.tapAsync("watch-run", (_, done) => {
       hotMiddleware.publish({ action: "compiling" });
       done();
     });
 
-    compiler.watch({}, (err, stats) => {
-      if (err) {
-        console.log(err);
-        return;
-      }
+    compiler.watch(
+      {
+        ignored: [
+          "**/node_modules/**",
+          "src/background/**/*",
+          "src/popup/**/*",
+        ],
+        aggregateTimeout: 1000,
+      },
+      (err, state) => {
+        if (err) {
+          console.log(err);
+          return;
+        }
 
-      resolve();
-    });
+        Object.keys(state.compilation.assets).map((fileName) => {
+          if (
+            fileName.lastIndexOf(".map") !== -1 ||
+            fileName.includes("hot-update")
+          ) {
+            const filePath = path.resolve(__dirname, "..", "dist", fileName);
+            if (fs.existsSync(filePath)) {
+              fs.rmSync(filePath, { force: true });
+            }
+          }
+        });
+
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send("#CONTENT-SCRIPTS", {
+              binary: false,
+            });
+          }
+        });
+
+        resolve();
+      }
+    );
   });
 }
 

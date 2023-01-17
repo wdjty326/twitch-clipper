@@ -15,5 +15,5 @@ if (playerControl?.firstChild) {
 }
 
 const chromeEx = document.createElement("span");
-chromeEx.innerHTML = "TEST2";
+chromeEx.innerHTML = "TEST56";
 document.body.appendChild(chromeEx);

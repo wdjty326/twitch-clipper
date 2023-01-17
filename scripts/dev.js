@@ -34,11 +34,11 @@ const manifestString = JSON.stringify({
   },
     content_scripts: [
       {
-        matches: ["https://www.twitch.tv/lilpaaaaaa"],
+        matches: ["https://www.twitch.tv/*", "https://twitch.tv/*"],
         js: ["contents.js"],
       },
     ],
-  host_permissions: ["https://www.twitch.tv/"],
+  host_permissions: ["https://www.twitch.tv/*", "https://twitch.tv/*"],
   background: {
     service_worker: "background.js",
   },

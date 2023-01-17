@@ -4,12 +4,8 @@ if (process.env.NODE_ENV === "development") {
       try {
         if (typeof message === "string") {
           if (message === "#CONTENT-SCRIPTS") {
-            const response = await chrome.runtime.sendMessage("#BACKGROUND");
-            if (response?.farewell) {
-              console.log("#OK");
-              window.location.reload();
-            }
-            sendResponse({ farewell: "ok" });
+            console.log("#OK");
+            window.location.reload();
           }
         }
       } catch (e) {

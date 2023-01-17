@@ -19,25 +19,15 @@ if (process.env.NODE_ENV === "development") {
             console.log("#PONG");
             break;
           case "#BACKGROUND": // Background reload
-            console.log("#OK");
-            chrome.runtime.reload();
-            break;
           case "#CONTENT-SCRIPTS": // Content-Scripts reload
             const [tab] = await await chrome.tabs.query({
               active: true,
-              currentWindow: true,
+              //  currentWindow: true,
             });
             if (tab?.id) {
-              const response = await chrome.tabs.sendMessage(
-                tab.id,
-                "#CONTENT-SCRIPTS"
-              );
-              console.log(response);
-              if (response?.farewell)
-                console.log(
-                  "[contentscript] chrome.runtime.sendMessage()",
-                  response?.farewell
-                );
+              console.log("[contentscript] chrome.runtime.sendMessage()");
+              await chrome.tabs.sendMessage(tab.id, "#CONTENT-SCRIPTS");
+              chrome.runtime.reload();
             }
             break;
         }
@@ -49,17 +39,4 @@ if (process.env.NODE_ENV === "development") {
       if (typeof clearPing !== "undefined") clearPing();
     };
   }
-
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    try {
-      if (message === "#BACKGROUND") {
-        chrome.runtime.reload();
-        setTimeout(() => {
-          sendResponse({ farewell: "ok" });
-        }, 1000);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  });
 }

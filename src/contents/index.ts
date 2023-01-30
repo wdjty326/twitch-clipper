@@ -1,8 +1,8 @@
 import "./hot";
+import "./transcode";
 
 const playerControl = document.getElementById("channel-player");
 if (playerControl?.firstChild) {
-	//const leftControlGroup = playerControl.firstElementChild;
 	const rightControlGroup = playerControl.lastElementChild;
 
 	if (rightControlGroup) {
@@ -13,7 +13,3 @@ if (playerControl?.firstChild) {
 		};
 	}	
 }
-
-const chromeEx = document.createElement("span");
-chromeEx.innerHTML = "TEST56";
-document.body.appendChild(chromeEx);

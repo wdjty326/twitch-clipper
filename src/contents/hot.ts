@@ -9,7 +9,7 @@ if (process.env.NODE_ENV === "development") {
           }
         }
       } catch (e) {
-        console.error(e);
+        console.error("HMR:", e);
       }
     }
   );

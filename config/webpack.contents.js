@@ -24,7 +24,7 @@ module.exports = merge(common, {
           ]
         : path.resolve(__dirname, "..", "src", "contents", "index.ts"),
   },
-  devtool: process.env.NODE_ENV === "development" ? false : "source-map",
+  devtool: process.env.NODE_ENV === "development" ? "source-map" : false,
   plugins:
     process.env.NODE_ENV === "development"
       ? [new webpack.HotModuleReplacementPlugin()]

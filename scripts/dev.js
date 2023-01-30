@@ -13,13 +13,15 @@ const backgroundConfig = require("../config/webpack.background");
 const contentsConfig = require("../config/webpack.contents");
 const popupConfig = require("../config/webpack.popup");
 
-const popupIndex = `<!DOCTYPE html>
+const getPopupIndex = (path = "") => `<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
+	<meta http-equiv="origin-trial" content="TOKEN_GOES_HERE">
+	<meta http-equiv="Cross-Origin-Resource-Policy" content="same-origin">
   </head>
   <body>
-    <iframe src="http://localhost:9080" width="340" height="580" style="border:none"></iframe>
+    <iframe src="http://localhost:9080${path}" width="340" height="580" style="border:none"></iframe>
   </body>
 </html>`;
 
@@ -28,22 +30,36 @@ const manifestString = JSON.stringify({
   name: "Chrome Extensions Template Test",
   description: "Base Level Extension Template Test",
   version: "1.0",
-  permissions: ["activeTab", "background", "tabs"],
+  permissions: [
+    "activeTab",
+    "background",
+    "tabs",
+    "webRequest",
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess",
+    "declarativeNetRequestFeedback",
+  ],
   action: {
     default_popup: "index.html",
   },
-    content_scripts: [
-      {
-        matches: ["https://www.twitch.tv/*", "https://twitch.tv/*"],
-        js: ["contents.js"],
-      },
-    ],
-  host_permissions: ["https://www.twitch.tv/*", "https://twitch.tv/*"],
+  content_scripts: [
+    {
+      matches: ["https://*.twitch.tv/*", "https://*.hls.ttvnw.net/*"],
+      js: ["contents.js", "2de34c4e54918508de9f.js"],
+    },
+  ],
+  host_permissions: ["https://*.twitch.tv/*", "https://*.hls.ttvnw.net/*"],
   background: {
     service_worker: "background.js",
   },
   content_security_policy: {
     extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'",
+  },
+  cross_origin_embedder_policy: {
+    value: "require-corp",
+  },
+  cross_origin_opener_policy: {
+    value: "same-origin",
   },
 });
 
@@ -77,7 +93,15 @@ function initPopup() {
 
   fs.writeFileSync(
     path.resolve(__dirname, "..", "dist", "index.html"),
-    popupIndex,
+    getPopupIndex(),
+    {
+      encoding: "utf-8",
+    }
+  );
+
+  fs.writeFileSync(
+    path.resolve(__dirname, "..", "dist", "clipper.html"),
+    getPopupIndex("/clipper.html"),
     {
       encoding: "utf-8",
     }

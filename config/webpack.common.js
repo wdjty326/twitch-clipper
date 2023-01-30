@@ -10,6 +10,7 @@ module.exports = {
     path: path.join(__dirname, "..", "dist"),
     publicPath: ASSET_PATH,
     filename: "[name].js",
+	chunkFilename: "[name].js",
   },
   resolve: {
     extensions: [".ts", ".tsx", ".js", ".jsx"],

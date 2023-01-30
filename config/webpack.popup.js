@@ -12,6 +12,7 @@ module.exports = merge(
   {
     entry: {
       popup: path.resolve(__dirname, "..", "src", "popup", "index.tsx"),
+      clipper: path.resolve(__dirname, "..", "src", "clipper", "index.tsx"),
     },
     module: {
       rules: [
@@ -32,6 +33,7 @@ module.exports = merge(
         enforceSizeThreshold: 50000,
         cacheGroups: {
           vendors: {
+			name: "vendors",
             test: /[\\/]node_modules[\\/]/,
             priority: -10,
             reuseExistingChunk: true,
@@ -48,7 +50,7 @@ module.exports = merge(
       new miniCssExtractPlugin({
         linkType: "text/css",
         filename: "[name].css",
-        chunkFilename: "[name].[id].css",
+        chunkFilename: "[name].css",
       }),
       new copyWebpackPlugin({
         patterns: [
@@ -59,8 +61,14 @@ module.exports = merge(
         ],
       }),
       new htmlWebpackPlugin({
-        filename: "index.html",
+        filename: "popup.html",
         template: path.resolve(__dirname, "..", "index.html"),
+        chunks: ["popup", "vendors"],
+      }),
+      new htmlWebpackPlugin({
+        filename: "clipper.html",
+        template: path.resolve(__dirname, "..", "index.html"),
+        chunks: ["clipper", "vendors"],
       }),
     ],
   },

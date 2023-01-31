@@ -1,10 +1,10 @@
 import { FunctionComponent, useEffect, useState } from "react";
 
-
-
 interface PacketMessage {
   url: string;
 }
+
+const maximum = 120;
 
 const App: FunctionComponent = () => {
   const [packets, setPackets] = useState<string[]>([]);
@@ -16,11 +16,12 @@ const App: FunctionComponent = () => {
       sendResponse: (response?: any) => void
     ) => {
       try {
-        //const json = JSON.parse(message) as PacketMessage;
-        if ("url" in message) {
-          setPackets(packets.concat([message.url]));
+        if ("urls" in message) {
+          setPackets(message.urls);
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error(e);
+      }
     };
     chrome.runtime.onMessage.addListener(callback);
     return () => {
@@ -31,11 +32,10 @@ const App: FunctionComponent = () => {
   return (
     <div>
       <header>
-        <h1>Chrome Extensions Template</h1>
+        <h1>Twitch Clipper</h1>
       </header>
       <main>
         <article>
-          <p>크롬 확장프로그램 탬플릿 입니다.</p>
           {packets.map((url) => (
             <p>{url}</p>
           ))}

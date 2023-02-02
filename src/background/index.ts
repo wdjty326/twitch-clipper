@@ -4,30 +4,35 @@ import "./hot"; // Hot Module Reloader
 
 const networkLog: Record<number, string[]> = {};
 
+const sleep = (ms: number) =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
 chrome.runtime.onInstalled.addListener(function () {
   chrome.commands.onCommand.addListener(async (command) => {
     if (command === "run-foo") {
-      const response = await chrome.windows.create({
-        url: `chrome-extension://${chrome.runtime.id}/clipper.html`,
-        width: 800,
-        height: 600,
+      const tabs = await await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
       });
 
-      if (response.id) {
-        ((id: number) => {
-          setTimeout(async () => {
-            const tabs = await await chrome.tabs.query({ active: true });
-            if (tabs.length !== 0 && tabs[0].id) {
-              const tabId = tabs[0].id;
-              if (tabId in networkLog) {
-                chrome.tabs.sendMessage(id, {
-                  tabId,
-                  urls: networkLog[tabId],
-                });
-              }
-            }
-          }, 1000);
-        })(response.id);
+      if (typeof tabs[0] !== "undefined" && typeof tabs[0].id !== "undefined") {
+        const tabId = tabs[0].id;
+        await chrome.windows.create({
+          url: `chrome-extension://${chrome.runtime.id}/clipper.html`,
+          width: 800,
+          height: 600,
+        });
+
+        await sleep(1000); // rendering
+
+        if (tabId in networkLog) {
+          await chrome.runtime.sendMessage({
+            tabId,
+            urls: networkLog[tabId],
+          });
+        }
       }
     }
   });

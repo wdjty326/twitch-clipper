@@ -16,7 +16,7 @@
 	"commands": {
 		"run-foo": {
 			"suggested_key": {
-				"default": "Ctrl+Shift+X",
+				"default": "Ctrl+Shift+S",
 				"mac": "Command+Shift+X",
 				"chromeos": "Ctrl+Shift+X",
 				"linux": "Ctrl+Shift+X"
@@ -25,7 +25,7 @@
 		}
 	},
 	"action": {
-		"default_popup": "index.html",
+		"default_popup": "popup.html",
 		"default_icon": "icon-32.png"
 	},
 	"content_scripts": [

@@ -15,7 +15,7 @@ export const webRequestListener = (
       if (/^https:\/\/.+\.hls\.ttvnw\.net\/(.+)\.ts$/.test(details.url)) {
         callback(details);
       }
-      console.log("onBeforeSendHeaders", temp);
+    //  console.log("onBeforeSendHeaders", temp);
     },
     { urls: ["<all_urls>"] },
     ["requestHeaders", "extraHeaders"]

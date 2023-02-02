@@ -1,13 +1,20 @@
 {
 	"compilerOptions": {
 		"strict": true,
-		"module": "CommonJS",
-		"target": "ES2015",
+		"module": "ESNext",
+		"target": "ESNext",
 		"esModuleInterop": true,
 		"jsx": "react-jsx",
 		"sourceMap": false,
+		"allowJs": true,
+		"checkJs": false,
+		"moduleResolution": "node",
 		"rootDir": "src",
 		"outDir": "dist/js",
 		"noEmitOnError": true
-	}
+	},
+	"include": [
+		"src/**/*.ts",
+		"src/**/*.tsx"
+	]
 }

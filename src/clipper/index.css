@@ -6,6 +6,19 @@ body {
   margin: 0;
 }
 
+header,
+main {
+  padding: 12px;
+}
+
+video {
+  margin: 0 auto;
+  display: block;
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+}
+
 * {
   box-sizing: border-box;
 }

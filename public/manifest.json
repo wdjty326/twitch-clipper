@@ -4,6 +4,8 @@
 	"description": "Base Level Extension Template",
 	"version": "1.0",
 	"permissions": [
+		"storage",
+		"unlimitedStorage",
 		"activeTab",
 		"background",
 		"tabs",
@@ -13,6 +15,9 @@
 		"declarativeNetRequestFeedback",
 		"commands"
 	],
+	"file_system_provider_capabilities": {
+		"source": "file"
+	},
 	"commands": {
 		"run-foo": {
 			"suggested_key": {

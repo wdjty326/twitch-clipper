@@ -1,8 +1,14 @@
 import { webRequestListener } from "./webRequest";
+import * as storage from "./storage";
 
 import "./hot"; // Hot Module Reloader
 
-const networkLog: Record<number, string[]> = {};
+interface LogInfo {
+  url: string;
+  xProgramDateTime: string;
+}
+
+const networkLog: Record<number, LogInfo[]> = {};
 
 const sleep = (ms: number) =>
   new Promise<void>((resolve) => {
@@ -25,6 +31,10 @@ chrome.runtime.onInstalled.addListener(function () {
           height: 600,
         });
 
+        chrome.windows.onRemoved.addListener(() => {
+          storage.remove(tabId);
+        });
+
         await sleep(1000); // rendering
 
         if (tabId in networkLog) {
@@ -40,11 +50,17 @@ chrome.runtime.onInstalled.addListener(function () {
   webRequestListener((details) => {
     const tabId = details.tabId;
     const url = details.url;
+    const xProgramDateTime = new Date(details.timeStamp).toISOString();
 
     if (!(tabId in networkLog)) networkLog[tabId] = [];
     const length = networkLog[tabId].length + 1;
     networkLog[tabId] = networkLog[tabId]
-      .concat([url])
+      .concat([
+        {
+          url,
+          xProgramDateTime,
+        },
+      ])
       .slice(Math.min(0, length - 120), length); // 120s
   });
 });

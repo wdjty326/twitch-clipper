@@ -1,66 +1,80 @@
 import { webRequestListener } from "./webRequest";
-import * as storage from "./storage";
 
 import "./hot"; // Hot Module Reloader
 
 interface LogInfo {
-  url: string;
-  xProgramDateTime: string;
+	url: string;
+	dump?: Uint8Array;
+	xProgramDateTime: string;
 }
 
 const networkLog: Record<number, LogInfo[]> = {};
 
 const sleep = (ms: number) =>
-  new Promise<void>((resolve) => {
-    setTimeout(resolve, ms);
-  });
+	new Promise<void>((resolve) => {
+		setTimeout(resolve, ms);
+	});
 
 chrome.runtime.onInstalled.addListener(function () {
-  chrome.commands.onCommand.addListener(async (command) => {
-    if (command === "run-foo") {
-      const tabs = await await chrome.tabs.query({
-        active: true,
-        currentWindow: true,
-      });
+	chrome.commands.onCommand.addListener(async (command) => {
+		if (command === "run-foo") {
+			const tabs = await await chrome.tabs.query({
+				active: true,
+				currentWindow: true,
+			});
 
-      if (typeof tabs[0] !== "undefined" && typeof tabs[0].id !== "undefined") {
-        const tabId = tabs[0].id;
-        await chrome.windows.create({
-          url: `chrome-extension://${chrome.runtime.id}/clipper.html`,
-          width: 800,
-          height: 600,
-        });
+			if (typeof tabs[0] !== "undefined" && typeof tabs[0].id !== "undefined") {
+				const tabId = tabs[0].id;
+				await chrome.windows.create({
+					url: `chrome-extension://${chrome.runtime.id}/clipper.html`,
+					width: 800,
+					height: 600,
+				});
 
-        chrome.windows.onRemoved.addListener(() => {
-          storage.remove(tabId);
-        });
+				await sleep(1000); // rendering
 
-        await sleep(1000); // rendering
+				if (tabId in networkLog) {
+					await chrome.runtime.sendMessage({
+						tabId,
+						urls: networkLog[tabId],
+					});
+				}
+			}
+		}
+	});
 
-        if (tabId in networkLog) {
-          await chrome.runtime.sendMessage({
-            tabId,
-            urls: networkLog[tabId],
-          });
-        }
-      }
-    }
-  });
+	chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+		(async () => {
+			const currentTab = await chrome.tabs.get(tabId);
 
-  webRequestListener((details) => {
-    const tabId = details.tabId;
-    const url = details.url;
-    const xProgramDateTime = new Date(details.timeStamp).toISOString();
+			const currentURL = currentTab.url || "";
+			const changeURL = changeInfo.url || "";
 
-    if (!(tabId in networkLog)) networkLog[tabId] = [];
-    const length = networkLog[tabId].length + 1;
-    networkLog[tabId] = networkLog[tabId]
-      .concat([
-        {
-          url,
-          xProgramDateTime,
-        },
-      ])
-      .slice(Math.min(0, length - 120), length); // 120s
-  });
+			if (currentURL && /^https?:\/\/www\.twitch\.tv\/(.+)$/.test(currentURL)) { // reset
+				if (currentURL !== changeURL) networkLog[tabId] = [];
+			}
+		})();
+	});
+
+	webRequestListener((details, dump) => {
+		const tabId = details.tabId;
+		const url = details.url;
+		const xProgramDateTime = new Date(details.timeStamp).toISOString();
+
+		if (!(tabId in networkLog)) networkLog[tabId] = [];
+
+		const isDuplication = networkLog[tabId].findIndex((log) => log.url === url) !== -1;
+		if (!isDuplication) {
+			const length = networkLog[tabId].length + 1;
+			networkLog[tabId] = networkLog[tabId]
+				.concat([
+					{
+						url,
+						dump,
+						xProgramDateTime,
+					},
+				])
+				.slice(Math.max(0, length - 120), length); // 120s
+		}
+	});
 });

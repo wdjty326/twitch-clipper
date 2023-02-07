@@ -1,3 +1,5 @@
+import TwitchClipDatabase from "../common/database";
+
 export const webRequestListener = (
 	callback: (details: chrome.webRequest.WebRequestHeadersDetails, dump?: Uint8Array) => void
 ) => {
@@ -13,15 +15,14 @@ export const webRequestListener = (
 			delete temp[requestId].timeStamp;
 
 			if (/^https:\/\/.+\.hls\.ttvnw\.net\/(.+)\.ts$/.test(details.url)) {
-				fetch(details.url, {
-					headers: {
-						"Cache-Control": "max-age=604800"
-					}
-				})
+				fetch(details.url)
 					.then((response) => response.arrayBuffer())
 					.then(async (buffer) => {
-						try {
-							if (buffer.byteLength !== 0) callback(details); // callback(details, new Uint8Array(buffer));
+						try {							
+							if (buffer.byteLength !== 0) {
+								await TwitchClipDatabase.insert(details.tabId, details.url, new Uint8Array(buffer), new Date(details.timeStamp).toISOString());
+								callback(details); // callback(details, new Uint8Array(buffer));
+							}
 						} catch (e) {
 							console.error(e);
 						}

@@ -1,6 +1,7 @@
 import { webRequestListener } from "./webRequest";
 
 import "./hot"; // Hot Module Reloader
+import TwitchClipDatabase from "../common/database";
 
 interface LogInfo {
 	url: string;
@@ -16,6 +17,8 @@ const sleep = (ms: number) =>
 	});
 
 chrome.runtime.onInstalled.addListener(function () {
+	TwitchClipDatabase.clear(); // DB Clear
+
 	chrome.commands.onCommand.addListener(async (command) => {
 		if (command === "run-foo") {
 			const tabs = await await chrome.tabs.query({
@@ -51,7 +54,10 @@ chrome.runtime.onInstalled.addListener(function () {
 			const changeURL = changeInfo.url || "";
 
 			if (currentURL && /^https?:\/\/www\.twitch\.tv\/(.+)$/.test(currentURL)) { // reset
-				if (currentURL !== changeURL) networkLog[tabId] = [];
+				if (currentURL !== changeURL) {
+					TwitchClipDatabase.delete(tabId);
+					networkLog[tabId] = [];
+				}
 			}
 		})();
 	});

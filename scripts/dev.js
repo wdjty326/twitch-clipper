@@ -27,30 +27,37 @@ const getPopupIndex = (path = "") => `<!DOCTYPE html>
 
 const manifestString = JSON.stringify({
   manifest_version: 3,
-  name: "Chrome Extensions Template Test",
-  description: "Base Level Extension Template Test",
+  name: "Chrome Extensions Template",
+  description: "Base Level Extension Template",
   version: "1.0",
-  permissions: [
-    "activeTab",
-    "background",
-    "tabs",
-    "webRequest",
-    "declarativeNetRequest",
-    "declarativeNetRequestWithHostAccess",
-    "declarativeNetRequestFeedback",
-  ],
+  permissions: ["activeTab", "background", "tabs", "webRequest", "commands"],
+  file_system_provider_capabilities: {
+    source: "file",
+  },
+  commands: {
+    "run-foo": {
+      suggested_key: {
+        default: "Ctrl+Shift+S",
+        mac: "Command+Shift+X",
+        chromeos: "Ctrl+Shift+X",
+        linux: "Ctrl+Shift+X",
+      },
+      description: 'Run "foo" on the current page.',
+    },
+  },
   action: {
-    default_popup: "index.html",
+    default_popup: "popup.html",
+    default_icon: "icon-32.png",
   },
   content_scripts: [
     {
       matches: ["https://*.twitch.tv/*", "https://*.hls.ttvnw.net/*"],
-      js: ["contents.js", "2de34c4e54918508de9f.js"],
+      js: ["contents.js"],
     },
   ],
   host_permissions: ["https://*.twitch.tv/*", "https://*.hls.ttvnw.net/*"],
   background: {
-    service_worker: "background.js",
+    service_worker: "main.js",
   },
   content_security_policy: {
     extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'",

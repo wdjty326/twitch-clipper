@@ -4,15 +4,10 @@
 	"description": "Base Level Extension Template",
 	"version": "1.0",
 	"permissions": [
-		"storage",
-		"unlimitedStorage",
 		"activeTab",
 		"background",
 		"tabs",
 		"webRequest",
-		"declarativeNetRequest",
-		"declarativeNetRequestWithHostAccess",
-		"declarativeNetRequestFeedback",
 		"commands"
 	],
 	"file_system_provider_capabilities": {

@@ -14,7 +14,14 @@ const corePath = new URL(
   `chrome-extension://${chrome.runtime.id}`
 ).href;
 
-const workerPath = new Worker(
+const workerPath1 = new Worker(
+  new URL("ffmpeg-core.worker.js", `chrome-extension://${chrome.runtime.id}`),
+  {
+    name: "fffmpeg-core.worker.js",
+  }
+);
+
+const workerPath2 = new Worker(
   new URL("ffmpeg-core.worker.js", `chrome-extension://${chrome.runtime.id}`),
   {
     name: "fffmpeg-core.worker.js",
@@ -104,7 +111,7 @@ const App: FunctionComponent = () => {
         if ("urls" in message) {
           (async () => {
             const result = await TwitchClipDatabase.selectAll(message.tabId);
-			transcode(result as LogInfo[]).then((url) => {
+            transcode(result as LogInfo[]).then((url) => {
               setVideoUrl(url);
             });
           })();

@@ -8,7 +8,8 @@
 		"background",
 		"tabs",
 		"webRequest",
-		"commands"
+		"commands",
+		"downloads"
 	],
 	"file_system_provider_capabilities": {
 		"source": "file"
@@ -47,7 +48,7 @@
 		"service_worker": "main.js"
 	},
 	"content_security_policy": {
-		"extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+		"extension_pages": "script-src 'self' 'wasm-unsafe-eval'; script-src-elem 'self' blob:; object-src 'self'"
 	},
 	"cross_origin_embedder_policy": {
 		"value": "require-corp"

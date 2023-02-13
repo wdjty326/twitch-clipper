@@ -1,5 +1,6 @@
 import "./hot";
-import "./transcode";
+
+/** @deprecated 사용불가코드 */
 
 const videoPlayer = document.querySelector(".video-player");
 const observer = new MutationObserver((mutations) => {
@@ -27,18 +28,3 @@ observer.observe(videoPlayer!, {
   childList: true,
   subtree: true,
 });
-
-//const playerControl = document.getElementById("channel-player")!;
-//if (playerControl!.firstChild) {
-//  const rightControlGroup = playerControl.lastElementChild;
-
-//  if (rightControlGroup) {
-//    const plyerClipButton: HTMLButtonElement = rightControlGroup.querySelector(
-//      "button[data-a-target='player-clip-button']"
-//    )!;
-//    plyerClipButton.onclick = (ev) => {
-//      ev.preventDefault();
-//      alert("test");
-//    };
-//  }
-//}

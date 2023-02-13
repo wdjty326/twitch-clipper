@@ -29,24 +29,54 @@ class TwitchClipDatabase {
     };
   }
 
-  async insert(tabId: number, url: string, dump: Uint8Array, xProgramDateTime: string) {
+  async insert(
+    tabId: number,
+    url: string,
+    dump: Uint8Array,
+    xProgramDateTime: string
+  ) {
     if (!this.db) {
       this.waitFunc.push(() => this.insert(tabId, url, dump, xProgramDateTime));
       return;
     }
 
     await new Promise<void>((resolve, reject) => {
+      // 데이터 저장
       const request = this.db!.transaction(storeName, "readwrite")
         .objectStore(storeName)
         .add({
           tabId,
-		  url,
+          url,
           dump,
           xProgramDateTime,
         });
 
       request.onsuccess = () => resolve();
       request.onerror = (ev) => reject(ev);
+    });
+
+    await new Promise<void>((resolve, reject) => {
+      // 이전데이터 제거
+      const request = this.db!.transaction(storeName, "readonly")
+        .objectStore(storeName)
+        .index("index_by_tabId")
+        .getAll(tabId);
+
+      request.onsuccess = async () => {
+        for (const { id, xProgramDateTime } of request.result) {
+          const currentDateTime = new Date(xProgramDateTime).getTime();
+          if (currentDateTime < Date.now() - 600000) {
+            await new Promise<void>((resolve, reject) => {
+              const request = this.db!.transaction(storeName, "readwrite")
+                .objectStore(storeName)
+                .delete(id);
+              request.onsuccess = () => resolve();
+              request.onerror = (ev) => reject(ev);
+            });
+          }
+          resolve();
+        }
+      };
     });
   }
 
@@ -86,7 +116,7 @@ class TwitchClipDatabase {
         tabId: number;
         dump: Uint8Array;
         xProgramDateTime: string;
-		url: string;
+        url: string;
       }>
     >((resolve, reject) => {
       const request = this.db!.transaction(storeName, "readwrite")

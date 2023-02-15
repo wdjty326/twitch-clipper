@@ -1,7 +1,7 @@
 {
-  "name": "chrome-extension",
+  "name": "chrome-twitch-clip-downloader-extension",
   "version": "1.0.0",
-  "description": "Base Level Extension Template",
+  "description": "KR Twitch Clip Downloader",
   "main": "dist/background.js",
   "scripts": {
     "build": "node scripts/build",

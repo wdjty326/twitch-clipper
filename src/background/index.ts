@@ -3,84 +3,60 @@ import { webRequestListener } from "./webRequest";
 import "./hot"; // Hot Module Reloader
 import TwitchClipDatabase from "../common/database";
 
-interface LogInfo {
-	url: string;
-	dump?: Uint8Array;
-	xProgramDateTime: string;
-}
-
-const networkLog: Record<number, LogInfo[]> = {};
-
 const sleep = (ms: number) =>
-	new Promise<void>((resolve) => {
-		setTimeout(resolve, ms);
-	});
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
 
 chrome.runtime.onInstalled.addListener(function () {
-	TwitchClipDatabase.clear(); // DB Clear
+  TwitchClipDatabase.clear(); // DB Clear
 
-	chrome.commands.onCommand.addListener(async (command) => {
-		if (command === "run-foo") {
-			const tabs = await await chrome.tabs.query({
-				active: true,
-				currentWindow: true,
-			});
+  chrome.commands.onCommand.addListener(async (command) => {
+    if (command === "run-foo") {
+      const tabs = await await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
 
-			if (typeof tabs[0] !== "undefined" && typeof tabs[0].id !== "undefined") {
-				const tabId = tabs[0].id;
-				await chrome.windows.create({
-					url: `chrome-extension://${chrome.runtime.id}/clipper.html`,
-					width: 800,
-					height: 600,
-				});
+      if (typeof tabs[0] !== "undefined" && typeof tabs[0].id !== "undefined") {
+        const tabId = tabs[0].id;
+        const channelId = tabs[0].url!.substring(
+          tabs[0].url!.lastIndexOf("/") + 1,
+          tabs[0].url!.lastIndexOf("?") === -1
+            ? undefined
+            : tabs[0].url!.lastIndexOf("?")
+        );
 
-				await sleep(1000); // rendering
+        await chrome.windows.create({
+          url: `chrome-extension://${chrome.runtime.id}/clipper.html`,
+          width: 800,
+          height: 600,
+          type: "popup",
+        });
 
-				if (tabId in networkLog) {
-					await chrome.runtime.sendMessage({
-						tabId,
-						urls: networkLog[tabId],
-					});
-				}
-			}
-		}
-	});
+        await sleep(1000); // rendering
 
-	chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
-		(async () => {
-			const currentTab = await chrome.tabs.get(tabId);
+        await chrome.runtime.sendMessage({
+          tabId,
+          channelId,
+          xProgramDateTime: new Date().toISOString(),
+        });
+      }
+    }
+  });
 
-			const currentURL = currentTab.url || "";
-			const changeURL = changeInfo.url || "";
+  chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+    (async () => {
+      const currentTab = await chrome.tabs.get(tabId);
 
-			if (currentURL && /^https?:\/\/www\.twitch\.tv\/(.+)$/.test(currentURL)) { // reset
-				if (currentURL !== changeURL) {
-					TwitchClipDatabase.delete(tabId);
-					networkLog[tabId] = [];
-				}
-			}
-		})();
-	});
+      const currentURL = currentTab.url || "";
+      const changeURL = changeInfo.url || "";
 
-	webRequestListener((details, dump) => {
-		const tabId = details.tabId;
-		const url = details.url;
-		const xProgramDateTime = new Date(details.timeStamp).toISOString();
+      if (currentURL && /^https?:\/\/www\.twitch\.tv\/(.+)$/.test(currentURL)) {
+        if (currentURL !== changeURL) TwitchClipDatabase.delete(tabId); // reset
+      }
+    })();
+  });
 
-		if (!(tabId in networkLog)) networkLog[tabId] = [];
-
-		const isDuplication = networkLog[tabId].findIndex((log) => log.url === url) !== -1;
-		if (!isDuplication) {
-			const length = networkLog[tabId].length + 1;
-			networkLog[tabId] = networkLog[tabId]
-				.concat([
-					{
-						url,
-						dump,
-						xProgramDateTime,
-					},
-				])
-				.slice(Math.max(0, length - 120), length); // 120s
-		}
-	});
+  webRequestListener((details, dump) => {});
 });

@@ -13,22 +13,42 @@ type chromeEvent = (
 
 const App: FunctionComponent = () => {
   const [videoUrl, setVideoUrl] = useState<string>("");
+  const [initFileName, setFileName] = useState<string>("");
 
   useEffect(() => {
-    const callback: chromeEvent = (message) => {
+    const callback: chromeEvent = (message: {
+      tabId: number;
+      channelId: string;
+      xProgramDateTime: string;
+    }) => {
       try {
-        if ("urls" in message) {
+        if ("tabId" in message) {
           (async () => {
             const result = await TwitchClipDatabase.selectAll(message.tabId);
             transcode(result as LogInfo[]).then((url) => {
               setVideoUrl(url);
+              setFileName(`${message.channelId} ${message.xProgramDateTime}`);
             });
+
+            await chrome.storage.session.set(message);
           })();
         }
       } catch (e) {
         console.error(e);
       }
     };
+
+    chrome.storage.session
+      .get(["tabId", "channelId", "xProgramDateTime"])
+      .then(async (message) => {
+        if ("tabId" in message) {
+          const result = await TwitchClipDatabase.selectAll(message.tabId);
+          transcode(result as LogInfo[]).then((url) => {
+            setVideoUrl(url);
+            setFileName(`${message.channelId} ${message.xProgramDateTime}`);
+          });
+        }
+      });
     chrome.runtime.onMessage.addListener(callback);
     return () => {
       chrome.runtime.onMessage.removeListener(callback);
@@ -36,14 +56,18 @@ const App: FunctionComponent = () => {
   }, []);
 
   return (
-    <div>
+    <div className="app">
       <header>
-        <h1>Twitch Clipper</h1>
+        <h1>트위치 클립 다운로더</h1>
       </header>
       <main>
         <article>{videoUrl ? <ClipVideo src={videoUrl} /> : "Loading"}</article>
       </main>
-      <Toolbar url={videoUrl} onUpdateVideoURL={setVideoUrl} />
+      <Toolbar
+        url={videoUrl}
+        initFileName={initFileName}
+        onUpdateVideoURL={setVideoUrl}
+      />
     </div>
   );
 };

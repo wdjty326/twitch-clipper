@@ -21,6 +21,7 @@ class TwitchClipDatabase {
         autoIncrement: true,
       });
       store.createIndex("index_by_tabId", "tabId", { unique: false });
+      store.createIndex("index_by_url", "url", { unique: true });
       this.waitFunc.forEach((func) => func());
     };
     request.onsuccess = (event: any) => {
@@ -40,32 +41,47 @@ class TwitchClipDatabase {
       return;
     }
 
-    await new Promise<void>((resolve, reject) => {
+    try {
+      const isUpdated = await new Promise<boolean>((resolve, reject) => {
+        const request = this.db!.transaction(storeName, "readonly")
+          .objectStore(storeName)
+          .index("index_by_url")
+          .get(url);
+
+        request.onsuccess = () => {
+          if (!request.result) resolve(true);
+          else resolve(false);
+        };
+        request.onerror = (ev) => reject(ev);
+      });
+      if (!isUpdated) return;
+
       // 데이터 저장
-      const request = this.db!.transaction(storeName, "readwrite")
-        .objectStore(storeName)
-        .add({
-          tabId,
-          url,
-          dump,
-          xProgramDateTime,
-        });
+      const insert = await new Promise<boolean>((resolve, reject) => {
+        const request = this.db!.transaction(storeName, "readwrite")
+          .objectStore(storeName)
+          .add({
+            tabId,
+            url,
+            dump,
+            xProgramDateTime,
+          });
 
-      request.onsuccess = () => resolve();
-      request.onerror = (ev) => reject(ev);
-    });
+        request.onsuccess = () => resolve(true);
+        request.onerror = (ev) => reject(ev);
+      });
 
-    await new Promise<void>((resolve, reject) => {
       // 이전데이터 제거
-      const request = this.db!.transaction(storeName, "readonly")
-        .objectStore(storeName)
-        .index("index_by_tabId")
-        .getAll(tabId);
+      return await new Promise<number>((resolve) => {
+        const request = this.db!.transaction(storeName, "readonly")
+          .objectStore(storeName)
+          .index("index_by_tabId")
+          .getAll(tabId);
 
-      request.onsuccess = async () => {
-        for (const { id, xProgramDateTime } of request.result) {
-          const currentDateTime = new Date(xProgramDateTime).getTime();
-          if (currentDateTime < Date.now() - 600000) {
+        request.onsuccess = async () => {
+          let n = 0;
+          for (const { id, xProgramDateTime } of request.result) {
+            if (n++ >= request.result.length - 300) break; // 이전데이터제거 1패킷당 2초
             await new Promise<void>((resolve, reject) => {
               const request = this.db!.transaction(storeName, "readwrite")
                 .objectStore(storeName)
@@ -73,11 +89,13 @@ class TwitchClipDatabase {
               request.onsuccess = () => resolve();
               request.onerror = (ev) => reject(ev);
             });
+            resolve(n);
           }
-          resolve();
-        }
-      };
-    });
+        };
+      });
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   async delete(tabId: number) {

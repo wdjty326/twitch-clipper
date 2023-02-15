@@ -1,13 +1,19 @@
-import { useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { upscale } from "./videoEncoder";
 
 interface ToolbarProps {
+  initFileName: string;
   url: string;
   onUpdateVideoURL(value: string): void;
 }
 
-export const Toolbar = ({ url, onUpdateVideoURL }: ToolbarProps) => {
-  const [fileName, setFileName] = useState<string>("");
+export const Toolbar = ({
+  url,
+  initFileName,
+  onUpdateVideoURL,
+}: ToolbarProps) => {
+  const [fileName, setFileName] = useState<string>(initFileName);
+  useLayoutEffect(() => setFileName(initFileName), [initFileName]);
   return (
     <footer>
       <input
@@ -19,13 +25,14 @@ export const Toolbar = ({ url, onUpdateVideoURL }: ToolbarProps) => {
         }}
       />
       <button
+        disabled
         className="toolbar-button"
         onClick={async () => {
           const videoUrl = await upscale(url);
           onUpdateVideoURL(videoUrl);
         }}
       >
-        1080p 화질변경
+        1080p 화질변경 (준비중)
       </button>
       <button
         className="toolbar-button"
@@ -33,7 +40,7 @@ export const Toolbar = ({ url, onUpdateVideoURL }: ToolbarProps) => {
           if (fileName) {
             const result = await chrome.downloads.download({
               url,
-              filename: `${fileName}.mp4`,
+              filename: `${encodeURIComponent(fileName)}.mp4`,
               saveAs: true,
               method: "GET",
             });

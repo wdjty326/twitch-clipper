@@ -13,7 +13,8 @@ const corePath = new URL(
 
 const ffmpeg = createFFmpeg({
   corePath,
-  mainName: "main", // mainName: "proxy_main",	// 싱글 스레드용
+  mainName: "main", // 싱글 스레드용
+  //  mainName: "proxy_main",
   log: true,
 });
 
@@ -64,14 +65,15 @@ export const transcode = async (logs: LogInfo[]) => {
       "result.mp4"
     );
     const result = ffmpeg.FS("readFile", "result.mp4");
-
-    return await new Promise<string>((resolve) => {
+    //return new Blob([result], { type: "video/mp4" });
+    return await new Promise<Uint8Array>((resolve) => {
       const reader = new FileReader();
       reader.onloadend = reader.onerror = (ev) => {
-        resolve(ev.target?.result?.toString() || "");
+        if (ev.target?.result instanceof ArrayBuffer)
+          resolve(new Uint8Array(ev.target.result));
         ffmpeg.exit();
       };
-      reader.readAsDataURL(
+      reader.readAsArrayBuffer(
         new Blob([result], {
           type: "video/mp4",
         })
@@ -82,7 +84,7 @@ export const transcode = async (logs: LogInfo[]) => {
     ffmpeg.exit();
   }
 
-  return "";
+  return null;
 };
 
 export const upscale = async (url: string) => {

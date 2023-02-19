@@ -1,20 +1,16 @@
 {
 	"manifest_version": 3,
-	"name": "Twitch Clipper KR",
-	"description": "한국 VOD 차단 이후 트위치 클립을 다운받기 위한 확장프로그램 입니다. 설치후 보고 싶은 방송에서 Ctrl+Shift+X를 눌러주세요.",
-	"version": "0.1",
+	"name": "Twitch Clip Downloader",
+	"description": "한국 VOD 차단 이후 트위치 클립을 다운받기 위한 확장프로그램 입니다.",
+	"version": "0.2",
 	"permissions": [
 		"activeTab",
-		"storage",
 		"background",
 		"tabs",
 		"webRequest",
 		"commands",
 		"downloads"
 	],
-	"file_system_provider_capabilities": {
-		"source": "file"
-	},
 	"commands": {
 		"run-foo": {
 			"suggested_key": {
@@ -25,10 +21,6 @@
 			},
 			"description": "Run \"foo\" on the current page."
 		}
-	},
-	"action": {
-		"default_popup": "popup.html",
-		"default_icon": "icon-32.png"
 	},
 	"content_scripts": [
 		{
@@ -49,7 +41,7 @@
 		"service_worker": "main.js"
 	},
 	"content_security_policy": {
-		"extension_pages": "script-src 'self' 'wasm-unsafe-eval'; script-src-elem 'self' blob:; object-src 'self'"
+		"extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
 	},
 	"cross_origin_embedder_policy": {
 		"value": "require-corp"

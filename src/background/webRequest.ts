@@ -24,6 +24,7 @@ export const webRequestListener = (
             try {
               if (buffer.byteLength !== 0) {
                 await TwitchClipDatabase.insert(
+                  "TwitchClip",
                   details.tabId,
                   details.url,
                   new Uint8Array(buffer),

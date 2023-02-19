@@ -8,8 +8,27 @@ const sleep = (ms: number) =>
     setTimeout(resolve, ms);
   });
 
+let openWindowIds: number[] = [];
+const scheduler1 = async () => {
+  await sleep(10000);
+  const windowIds: number[] = (await chrome.windows.getAll()).map(
+    (window) => window.id!
+  );
+
+  console.log("clear");
+  windowIds
+    .filter((windowId) => openWindowIds.indexOf(windowId) === -1)
+    .forEach((windowId) => {
+      TwitchClipDatabase.delete("TwitchClipTemp", windowId);
+    });
+  scheduler1();
+};
+
 chrome.runtime.onInstalled.addListener(function () {
   TwitchClipDatabase.clear(); // DB Clear
+  TwitchClipDatabase.clear("TwitchClipTemp"); // DB Clear
+
+  scheduler1();
 
   chrome.commands.onCommand.addListener(async (command) => {
     if (command === "run-foo") {
@@ -27,7 +46,7 @@ chrome.runtime.onInstalled.addListener(function () {
             : tabs[0].url!.lastIndexOf("?")
         );
 
-        await chrome.windows.create({
+        const window = await chrome.windows.create({
           url: `chrome-extension://${chrome.runtime.id}/clipper.html`,
           width: 800,
           height: 600,
@@ -35,8 +54,12 @@ chrome.runtime.onInstalled.addListener(function () {
         });
 
         await sleep(1000); // rendering
+        openWindowIds = (await chrome.windows.getAll()).map(
+          (window) => window.id!
+        );
 
         await chrome.runtime.sendMessage({
+          windowId: window.id,
           tabId,
           channelId,
           xProgramDateTime: new Date().toISOString(),
@@ -53,7 +76,8 @@ chrome.runtime.onInstalled.addListener(function () {
       const changeURL = changeInfo.url || "";
 
       if (currentURL && /^https?:\/\/www\.twitch\.tv\/(.+)$/.test(currentURL)) {
-        if (currentURL !== changeURL) TwitchClipDatabase.delete(tabId); // reset
+        if (currentURL !== changeURL)
+          TwitchClipDatabase.delete("TwitchClip", tabId); // reset
       }
     })();
   });

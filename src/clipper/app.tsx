@@ -16,39 +16,62 @@ const App: FunctionComponent = () => {
   const [initFileName, setFileName] = useState<string>("");
 
   useEffect(() => {
-    const callback: chromeEvent = (message: {
+    const callback: chromeEvent = async (message: {
       tabId: number;
+      windowId: number;
       channelId: string;
       xProgramDateTime: string;
     }) => {
       try {
         if ("tabId" in message) {
-          (async () => {
-            const result = await TwitchClipDatabase.selectAll(message.tabId);
-            transcode(result as LogInfo[]).then((url) => {
-              setVideoUrl(url);
-              setFileName(`${message.channelId} ${message.xProgramDateTime}`);
-            });
+          const currentWindow = await chrome.windows.getCurrent();
+          if (currentWindow.id === message.windowId) {
+            const result = await TwitchClipDatabase.select(
+              "TwitchClip",
+              message.tabId
+            );
+            const transcodeData = await transcode(result as LogInfo[]);
+            try {
+              if (transcodeData) {
+                TwitchClipDatabase.insert(
+                  "TwitchClipTemp",
+                  message.windowId,
+                  message.channelId,
+                  transcodeData,
+                  message.xProgramDateTime
+                );
 
-            await chrome.storage.session.set(message);
-          })();
+                const url = window.URL.createObjectURL(
+                  new Blob([transcodeData])
+                );
+                setVideoUrl(url);
+              }
+              setFileName(`${message.channelId} ${message.xProgramDateTime}`);
+            } catch (e) {
+              console.error(e);
+            }
+          }
         }
       } catch (e) {
         console.error(e);
       }
     };
 
-    chrome.storage.session
-      .get(["tabId", "channelId", "xProgramDateTime"])
-      .then(async (message) => {
-        if ("tabId" in message) {
-          const result = await TwitchClipDatabase.selectAll(message.tabId);
-          transcode(result as LogInfo[]).then((url) => {
-            setVideoUrl(url);
-            setFileName(`${message.channelId} ${message.xProgramDateTime}`);
-          });
+    (async () => {
+      const currentWindow = await chrome.windows.getCurrent();
+      if (currentWindow.id) {
+        const message = await TwitchClipDatabase.select(
+          "TwitchClipTemp",
+          currentWindow.id
+        );
+        if (message && "windowId" in message) {
+          const url = window.URL.createObjectURL(new Blob([message.dump]));
+          setVideoUrl(url);
+          setFileName(`${message.channelId} ${message.xProgramDateTime}`);
         }
-      });
+      }
+    })();
+
     chrome.runtime.onMessage.addListener(callback);
     return () => {
       chrome.runtime.onMessage.removeListener(callback);

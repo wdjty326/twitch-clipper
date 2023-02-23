@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 interface ClipVideoProps {
   src: string;
@@ -9,6 +9,9 @@ export const ClipVideo = ({ src }: ClipVideoProps) => {
   const [startTime, setStartTime] = useState<number>(0);
   const [endTime, setEndTime] = useState<number>(0);
 
+  const sliderRef = useRef<HTMLDivElement>(null);
+  const moveFlag = useRef<boolean>(false);
+
   return (
     <div>
       <video
@@ -16,12 +19,14 @@ export const ClipVideo = ({ src }: ClipVideoProps) => {
         src={src}
         onLoad={(ev) => {
           const video = ev.target as HTMLMediaElement;
+          debugger;
           setDuration(video.duration);
           setStartTime(0);
           setEndTime(video.duration);
         }}
       ></video>
       <div
+        ref={sliderRef}
         className="clips-editor-slider-background"
         style={{
           height: "48px",
@@ -31,13 +36,33 @@ export const ClipVideo = ({ src }: ClipVideoProps) => {
       >
         <div
           className="draggable-slider"
-          style={
-            {
-              //width: `calc(${parseFloat(((endTime + 1) / (startTime + 1)).toFixed(4))}%)`,
-            }
-          }
+          style={{
+            width: `${parseFloat(
+              (((endTime - startTime) / duration) * 100).toFixed(2)
+            )}%`,
+          }}
         >
-          <div className="draggable-slider-left">
+          <div
+            className="draggable-slider-left"
+            onMouseDown={() => {
+              moveFlag.current = true;
+            }}
+            onMouseMove={(e) => {
+              if (moveFlag.current) {
+                if (sliderRef.current) {
+                  const sliderEl = sliderRef.current;
+                  const { left, width } = sliderEl.getBoundingClientRect();
+                  const radio =
+                    duration *
+                    parseFloat((width / (e.clientX - left)).toFixed(2));
+                  setStartTime(Math.min(radio, endTime - 1));
+                }
+              }
+            }}
+            onMouseUp={() => {
+              moveFlag.current = false;
+            }}
+          >
             <svg
               type="color-fill-current"
               width="25px"
@@ -51,7 +76,27 @@ export const ClipVideo = ({ src }: ClipVideoProps) => {
             </svg>
           </div>
           <div className="draggable-slider-handler" />
-          <div className="draggable-slider-right">
+          <div
+            className="draggable-slider-right"
+            onMouseDown={() => {
+              moveFlag.current = true;
+            }}
+            onMouseMove={(e) => {
+              if (moveFlag.current) {
+                if (sliderRef.current) {
+                  const sliderEl = sliderRef.current;
+                  const { left, width } = sliderEl.getBoundingClientRect();
+                  const radio =
+                    duration *
+                    parseFloat((width / (e.clientX - left)).toFixed(2));
+                  setStartTime(Math.min(radio, endTime - 1));
+                }
+              }
+            }}
+            onMouseUp={() => {
+              moveFlag.current = false;
+            }}
+          >
             <svg
               type="color-fill-current"
               width="25px"

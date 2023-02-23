@@ -4,6 +4,7 @@ import TwitchClipDatabase from "../common/database";
 import Toolbar from "./toolbar";
 import { transcode } from "./videoEncoder";
 import { LogInfo } from "./defines";
+import Loader from "./loader";
 
 type chromeEvent = (
   message: any,
@@ -83,9 +84,7 @@ const App: FunctionComponent = () => {
       <header>
         <h1>트위치 클립 다운로더</h1>
       </header>
-      <main>
-        <article>{videoUrl ? <ClipVideo src={videoUrl} /> : "Loading"}</article>
-      </main>
+      <main>{videoUrl ? <ClipVideo src={videoUrl} /> : <Loader />}</main>
       <Toolbar
         url={videoUrl}
         initFileName={initFileName}

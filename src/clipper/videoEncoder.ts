@@ -15,7 +15,7 @@ const ffmpeg = createFFmpeg({
   corePath,
   mainName: "main", // 싱글 스레드용
   //  mainName: "proxy_main",
-  log: true,
+  log: process.env.NODE_ENV === "development",
 });
 
 const preloadFFmpeg = () =>

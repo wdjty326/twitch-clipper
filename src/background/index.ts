@@ -8,6 +8,7 @@ const sleep = (ms: number) =>
     setTimeout(resolve, ms);
   });
 
+// 초기화 스케줄러
 let openWindowIds: number[] = [];
 const scheduler1 = async () => {
   await sleep(10000);
@@ -27,8 +28,6 @@ const scheduler1 = async () => {
 chrome.runtime.onInstalled.addListener(function () {
   TwitchClipDatabase.clear(); // DB Clear
   TwitchClipDatabase.clear("TwitchClipTemp"); // DB Clear
-
-  scheduler1();
 
   chrome.commands.onCommand.addListener(async (command) => {
     if (command === "run-foo") {
@@ -82,5 +81,6 @@ chrome.runtime.onInstalled.addListener(function () {
     })();
   });
 
-  webRequestListener((details, dump) => {});
+  webRequestListener();
+  scheduler1();
 });

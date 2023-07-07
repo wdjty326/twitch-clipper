@@ -25,14 +25,13 @@ export const Toolbar = ({
         }}
       />
       <button
-        disabled
         className="toolbar-button"
         onClick={async () => {
           const videoUrl = await upscale(url);
           onUpdateVideoURL(videoUrl);
         }}
       >
-        1080p 화질변경 (준비중)
+        1080p 화질변경
       </button>
       <button
         className="toolbar-button"

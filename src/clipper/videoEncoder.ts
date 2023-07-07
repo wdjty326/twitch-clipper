@@ -1,4 +1,4 @@
-import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
+import { createFFmpeg, fetchFile } from "../ffmpeg";
 import { LogInfo } from "./defines";
 
 const corePath = new URL(
@@ -6,39 +6,23 @@ const corePath = new URL(
   `chrome-extension://${chrome.runtime.id}`
 ).href;
 
-//const workerPath = new URL(
-//  "ffmpeg-core.worker.js",
-//  `chrome-extension://${chrome.runtime.id}`
-//).href;
+const workerPath = new URL(
+  "ffmpeg-core.worker.js",
+  `chrome-extension://${chrome.runtime.id}`
+).href;
 
 const ffmpeg = createFFmpeg({
   corePath,
-  mainName: "main", // 싱글 스레드용
-  //  mainName: "proxy_main",
-  log: process.env.NODE_ENV === "development",
+  workerPath,
+  //  mainName: "main", // 싱글 스레드용
+  mainName: "proxy_main",
+  log: true, // process.env.NODE_ENV === "development",
 });
-
-const preloadFFmpeg = () =>
-  new Promise<void>((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = "/ffmpeg-core.js";
-    script.type = "text/javascript";
-    script.onload = () => {
-      //  new SharedWorker(workerPath, {
-      //    name: "fffmpeg-core.worker.js",
-      //  });
-      resolve();
-    };
-    script.onerror = () => {
-      reject();
-    };
-    document.head.appendChild(script);
-  });
 
 export const transcode = async (logs: LogInfo[]) => {
   try {
     if (!ffmpeg.isLoaded()) {
-      await preloadFFmpeg();
+    //  await preloadFFmpeg();
       await ffmpeg.load();
     }
 
@@ -90,7 +74,6 @@ export const transcode = async (logs: LogInfo[]) => {
 export const upscale = async (url: string) => {
   try {
     if (!ffmpeg.isLoaded()) {
-      await preloadFFmpeg();
       await ffmpeg.load();
     }
 

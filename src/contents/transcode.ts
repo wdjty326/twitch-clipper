@@ -1,5 +1,5 @@
 /** @deprecated 미사용코드 */
-import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
+import { createFFmpeg, fetchFile } from "../ffmpeg";
 
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (typeof message !== "string") return;

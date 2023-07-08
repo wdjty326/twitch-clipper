@@ -1,5 +1,6 @@
-import { createFFmpeg, fetchFile } from "../ffmpeg";
-import { LogInfo } from "./defines";
+import { createFFmpeg, fetchFile } from "./ffmpeg";
+import { LogInfo } from "../defines";
+import ProgressProvider from "./progress";
 
 const corePath = new URL(
   "ffmpeg-core.js",
@@ -14,18 +15,15 @@ const workerPath = new URL(
 const ffmpeg = createFFmpeg({
   corePath,
   workerPath,
-  //  mainName: "main", // 싱글 스레드용
+  // 전파처리
+  progress: ({ ratio }) => ProgressProvider._listeners.forEach((fn) => fn(Math.floor(ratio * 100))),
   mainName: "proxy_main",
-  log: true, // process.env.NODE_ENV === "development",
+  log: process.env.NODE_ENV === "development",
 });
 
 export const transcode = async (logs: LogInfo[]) => {
   try {
-    if (!ffmpeg.isLoaded()) {
-    //  await preloadFFmpeg();
-      await ffmpeg.load();
-    }
-
+    if (!ffmpeg.isLoaded()) await ffmpeg.load();
     let n = 0;
     for (const { url, dump } of logs) {
       try {
@@ -37,6 +35,8 @@ export const transcode = async (logs: LogInfo[]) => {
     }
 
     await ffmpeg.run(
+      "-sseof",
+	  "-600", // 비디오의 마지막 10분만 유지
       "-i",
       `concat:${Array(n)
         .fill(0)
@@ -49,7 +49,6 @@ export const transcode = async (logs: LogInfo[]) => {
       "result.mp4"
     );
     const result = ffmpeg.FS("readFile", "result.mp4");
-    //return new Blob([result], { type: "video/mp4" });
     return await new Promise<Uint8Array>((resolve) => {
       const reader = new FileReader();
       reader.onloadend = reader.onerror = (ev) => {
@@ -82,7 +81,7 @@ export const upscale = async (url: string) => {
       "-i",
       "input.mp4",
       "-vf",
-      "scale=1920x1080:flags=lanczos",
+      "scale=-1:1080:flags=lanczos",
       "-c:v",
       "libx264",
       "-preset",

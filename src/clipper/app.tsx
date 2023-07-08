@@ -13,9 +13,11 @@ type chromeEvent = (
 ) => void;
 
 const App: FunctionComponent = () => {
+  const [loading, setLoading] = useState<boolean>(false);
   const [videoUrl, setVideoUrl] = useState<string>("");
   const [initFileName, setFileName] = useState<string>("");
 
+  // 최초로드시 클립처리코드
   useEffect(() => {
     const callback: chromeEvent = async (message: {
       tabId: number;
@@ -23,54 +25,66 @@ const App: FunctionComponent = () => {
       channelId: string;
       xProgramDateTime: string;
     }) => {
-      try {
-        if ("tabId" in message) {
-          const currentWindow = await chrome.windows.getCurrent();
-          if (currentWindow.id === message.windowId) {
+      setLoading(true);
+      if ("tabId" in message) {
+        const currentWindow = await chrome.windows.getCurrent();
+        if (currentWindow.id === message.windowId) {
+          let transcodeData: Uint8Array | null = null;
+
+          // 클립데이터합침처리
+          try {
             const result = await TwitchClipDatabase.select(
               "TwitchClip",
               message.tabId
             );
-            const transcodeData = await transcode(result as LogInfo[]);
-            try {
-              if (transcodeData) {
-                TwitchClipDatabase.insert(
-                  "TwitchClipTemp",
-                  message.windowId,
-                  message.channelId,
-                  transcodeData,
-                  message.xProgramDateTime
-                );
+            transcodeData = await transcode(result as LogInfo[]);
+          } catch (e) {
+            console.error("TwitchClip:select:", e);
+          }
 
-                const url = window.URL.createObjectURL(
-                  new Blob([transcodeData])
-                );
-                setVideoUrl(url);
-              }
-              setFileName(`${message.channelId} ${message.xProgramDateTime}`);
-            } catch (e) {
-              console.error(e);
+          // 새로고침시 재로드를 위한 합친클립데이터 임시데이터 저장처리
+          try {
+            if (transcodeData) {
+              TwitchClipDatabase.insert(
+                "TwitchClipTemp",
+                message.windowId,
+                message.channelId,
+                transcodeData,
+                message.xProgramDateTime
+              );
+
+              const url = window.URL.createObjectURL(new Blob([transcodeData]));
+              setVideoUrl(url);
             }
+            setFileName(`${message.channelId} ${message.xProgramDateTime}`);
+          } catch (e) {
+            console.error("TwitchClipTemp:select:", e);
           }
         }
-      } catch (e) {
-        console.error(e);
       }
+      setLoading(false);
     };
 
     (async () => {
-      const currentWindow = await chrome.windows.getCurrent();
-      if (currentWindow.id) {
-        const message = await TwitchClipDatabase.select(
-          "TwitchClipTemp",
-          currentWindow.id
-        );
-        if (message && "windowId" in message) {
-          const url = window.URL.createObjectURL(new Blob([message.dump]));
-          setVideoUrl(url);
-          setFileName(`${message.channelId} ${message.xProgramDateTime}`);
+      try {
+        setLoading(true);
+        const currentWindow = await chrome.windows.getCurrent();
+        if (currentWindow.id) {
+          const message = await TwitchClipDatabase.select(
+            "TwitchClipTemp",
+            currentWindow.id
+          );
+          if (message && "windowId" in message) {
+            const url = window.URL.createObjectURL(new Blob([message.dump]));
+            setVideoUrl(url);
+            setFileName(`${message.channelId} ${message.xProgramDateTime}`);
+          }
         }
+      } catch (e) {
+        // TODO::사용자 에러 노출처리를 추후작업
+        console.error("TwitchClipTemp:select:", e);
       }
+      setLoading(false);
     })();
 
     chrome.runtime.onMessage.addListener(callback);
@@ -84,12 +98,17 @@ const App: FunctionComponent = () => {
       <header>
         <h1>트위치 클립 다운로더</h1>
       </header>
-      <main>{videoUrl ? <ClipVideo src={videoUrl} /> : <Loader />}</main>
-      <Toolbar
-        url={videoUrl}
-        initFileName={initFileName}
-        onUpdateVideoURL={setVideoUrl}
-      />
+      {loading ? (
+        <Loader />
+      ) : (
+        <>
+          <main>
+			{/** TODO::`videoURL`이 비어있을 경우 별도처리 코드 필요 */}
+            <ClipVideo src={videoUrl} />
+          </main>
+          <Toolbar url={videoUrl} initFileName={initFileName} />
+        </>
+      )}
     </div>
   );
 };

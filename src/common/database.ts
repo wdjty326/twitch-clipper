@@ -86,9 +86,9 @@ class TwitchClipDatabase {
               .getAll(tabId);
 
             request.onsuccess = async () => {
-              let n = 0;
               for (const { id, xProgramDateTime } of request.result) {
-                if (n++ >= request.result.length - 300) break; // 이전데이터제거 1패킷당 2초
+                const date = new Date(xProgramDateTime);
+                if (Date.now() - date.getTime() <= 10 * 60 * 1000 + 8 * 1000) break; // 이전데이터제거 1패킷당 2초 + 오차 최대 8초
                 await new Promise<void>((resolve, reject) => {
                   const request = this.db!.transaction(storeName, "readwrite")
                     .objectStore(storeName)

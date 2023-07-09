@@ -32,14 +32,14 @@ module.exports = merge(
         maxInitialRequests: 30,
         enforceSizeThreshold: 50000,
         cacheGroups: {
-		  scripts: {
-			name: "scripts",
+          scripts: {
+            name: "scripts",
             test: /[\\/]node_modules[\\/]\@ffmpeg[\\/]/,
             priority: -10,
             reuseExistingChunk: true,
           },
           runtime: {
-			name: "runtime",
+            name: "runtime",
             test: /[\\/]node_modules[\\/]/,
             priority: -10,
             reuseExistingChunk: true,
@@ -70,23 +70,24 @@ module.exports = merge(
         filename: "popup.html",
         template: path.resolve(__dirname, "..", "index.html"),
         chunks: ["popup", "runtime"],
-		minify: false,
-		inject: false,
+        minify: false,
+        inject: false,
       }),
       new htmlWebpackPlugin({
         filename: "clipper.html",
         template: path.resolve(__dirname, "..", "index.html"),
         chunks: ["clipper", "runtime", "scripts"],
-		minify: false,
-		inject: false,
+        minify: false,
+        inject: false,
       }),
     ],
   },
   {
     performance: {
-      hints: "warning",
-      maxAssetSize: 1512000,
-      maxEntrypointSize: 1512000,
+      hints: false,
+      //  hints: "warning",
+      //  maxAssetSize: 1512000,
+      //  maxEntrypointSize: 1512000,
     },
   }
 );

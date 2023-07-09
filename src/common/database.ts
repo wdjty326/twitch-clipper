@@ -11,12 +11,13 @@ class TwitchClipDatabase {
   private waitCallbacks: VoidFunction[] = [];
 
   constructor() {
-    const request = indexedDB.open("TwitchClipDatabase", 3);
+    const request = indexedDB.open("TwitchClipDatabase");
     request.onerror = (event) => {
       console.error("Why didn't you allow my web app to use IndexedDB?!");
     };
     request.onupgradeneeded = (event: any) => {
       this.db = event.target.result as IDBDatabase;
+      console.log("onupgradeneeded");
       const store = this.db.createObjectStore(storeName, {
         keyPath: "id",
         autoIncrement: true,
@@ -25,7 +26,6 @@ class TwitchClipDatabase {
       store.createIndex("index_by_url", "url", { unique: true });
 
       this.db.createObjectStore(tempName, { keyPath: "windowId" });
-      this.waitCallbacks.forEach((waitCallback) => waitCallback());
     };
     request.onsuccess = (event: any) => {
       this.db = event.target.result;
@@ -88,7 +88,8 @@ class TwitchClipDatabase {
             request.onsuccess = async () => {
               for (const { id, xProgramDateTime } of request.result) {
                 const date = new Date(xProgramDateTime);
-                if (Date.now() - date.getTime() <= 10 * 60 * 1000 + 8 * 1000) break; // 이전데이터제거 1패킷당 2초 + 오차 최대 8초
+                if (Date.now() - date.getTime() <= 10 * 60 * 1000 + 8 * 1000)
+                  break; // 이전데이터제거 1패킷당 2초 + 오차 최대 8초
                 await new Promise<void>((resolve, reject) => {
                   const request = this.db!.transaction(storeName, "readwrite")
                     .objectStore(storeName)

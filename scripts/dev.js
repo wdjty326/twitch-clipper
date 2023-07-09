@@ -37,7 +37,7 @@ const manifestString = JSON.stringify({
   commands: {
     "run-foo": {
       suggested_key: {
-        default: "Ctrl+Shift+S",
+        default: "Ctrl+Shift+X",
         mac: "Command+Shift+X",
         chromeos: "Ctrl+Shift+X",
         linux: "Ctrl+Shift+X",
@@ -46,7 +46,7 @@ const manifestString = JSON.stringify({
     },
   },
   action: {
-    default_popup: "popup.html",
+    default_popup: "index.html",
     default_icon: "icon-32.png",
   },
   content_scripts: [
@@ -57,7 +57,7 @@ const manifestString = JSON.stringify({
   ],
   host_permissions: ["https://*.twitch.tv/*", "https://*.hls.ttvnw.net/*"],
   background: {
-    service_worker: "main.js",
+    service_worker: "background.js",
   },
   content_security_policy: {
     extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'",
@@ -95,33 +95,6 @@ const overlayStyles = {
 };
 
 function initPopup() {
-  if (!fs.existsSync(path.resolve(__dirname, "..", "dist")))
-    fs.mkdirSync(path.resolve(__dirname, "..", "dist"));
-
-  fs.writeFileSync(
-    path.resolve(__dirname, "..", "dist", "index.html"),
-    getPopupIndex(),
-    {
-      encoding: "utf-8",
-    }
-  );
-
-  fs.writeFileSync(
-    path.resolve(__dirname, "..", "dist", "clipper.html"),
-    getPopupIndex("/clipper.html"),
-    {
-      encoding: "utf-8",
-    }
-  );
-
-  fs.writeFileSync(
-    path.resolve(__dirname, "..", "dist", "manifest.json"),
-    manifestString,
-    {
-      encoding: "utf-8",
-    }
-  );
-
   return new Promise((resolve, reject) => {
     const compiler = webpack(popupConfig);
     const hotMiddleware = webpackHotMiddleware(compiler, {
@@ -190,7 +163,7 @@ function initBackground() {
             fileName.lastIndexOf(".map") !== -1 ||
             fileName.includes("hot-update")
           ) {
-            const filePath = path.resolve(__dirname, "..", "dist", fileName);
+            const filePath = path.resolve(__dirname, "..", "test", fileName);
             if (fs.existsSync(filePath)) {
               fs.rmSync(filePath, { force: true });
             }
@@ -260,7 +233,7 @@ function initContents() {
             fileName.lastIndexOf(".map") !== -1 ||
             fileName.includes("hot-update")
           ) {
-            const filePath = path.resolve(__dirname, "..", "dist", fileName);
+            const filePath = path.resolve(__dirname, "..", "test", fileName);
             if (fs.existsSync(filePath)) {
               fs.rmSync(filePath, { force: true });
             }
@@ -281,7 +254,51 @@ function initContents() {
   });
 }
 
+async function writeFile(fileName, content) {
+  fs.writeFileSync(path.resolve(__dirname, "..", "test", fileName), content, {
+    encoding: "utf-8",
+  });
+}
+
+/**
+ * 에셋을 복사합니다.
+ * @param {*} source
+ * @param {*} target
+ * @returns
+ */
+async function copyAssets(source, target) {
+  if (!fs.existsSync(source)) return;
+  const fileNames = fs.readdirSync(source);
+  for (const fileName of fileNames) {
+    const filePath = path.resolve(source, fileName);
+    const targetPath = path.resolve(target, fileName);
+    const state = fs.statSync(filePath);
+    if (state.isDirectory()) {
+      fs.mkdirSync(targetPath);
+      await copyAssets(filePath, targetPath);
+    } else if (!fs.existsSync(targetPath))
+      fs.copyFileSync(filePath, targetPath);
+  }
+}
+
 async function init() {
+  if (fs.existsSync(path.resolve(__dirname, "..", "test"))) {
+    fs.rmdirSync(path.resolve(__dirname, "..", "test"), {
+      recursive: true,
+      force: true,
+    });
+  }
+  fs.mkdirSync(path.resolve(__dirname, "..", "test"));
+
+  writeFile("index.html", getPopupIndex());
+  writeFile("clipper.html", getPopupIndex("/clipper.html"));
+  writeFile("manifest.json", manifestString);
+
+  copyAssets(
+    path.resolve(__dirname, "..", "public"),
+    path.resolve(__dirname, "..", "test")
+  );
+
   await initBackground();
   await initContents();
   await initPopup();

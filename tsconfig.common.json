@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "module": "ESNext",
+    "target": "ESNext",
+    "esModuleInterop": true,
+    "jsx": "react-jsx",
+    "sourceMap": false,
+    "allowJs": true,
+    "checkJs": false,
+    "moduleResolution": "node",
+    "rootDir": "src",
+    "baseUrl": "./",
+    "noEmitOnError": true,
+    "paths": {
+      "@Background/*": ["background/*"],
+      "@Clipper/*": ["clipper/*"],
+      "@Common/*": ["common/*"],
+      "@Popup/*": ["popup/*"],
+      "@Contents/*": ["contents/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}

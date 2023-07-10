@@ -78,8 +78,9 @@ footer {
   width: 100%;
   min-height: 100%;
   display: grid;
-  grid-template-rows: min-content 1fr max-content;
-  padding: 24px;
+  grid-auto-rows: max-content; 
+  /*grid-template-rows: min-content 1fr max-content;*/
+  padding: 12px;
   row-gap: 12px;
 }
 
@@ -102,7 +103,7 @@ footer {
   height: 44px;
   border-radius: 8px;
   border: 1px solid rgba(0, 0, 0, 0.1);
-  padding: 12px 24px;
+  padding: 12px 12px;
   border-radius: 8px;
   flex: 1 1;
 }

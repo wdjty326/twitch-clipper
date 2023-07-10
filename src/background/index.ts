@@ -47,8 +47,8 @@ chrome.runtime.onInstalled.addListener(function () {
 
         const window = await chrome.windows.create({
           url: `chrome-extension://${chrome.runtime.id}/clipper.html`,
-          width: 800,
-          height: 600,
+          width: 520,
+          height: 492,
           type: "popup",
         });
 

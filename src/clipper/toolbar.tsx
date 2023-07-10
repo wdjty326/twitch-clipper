@@ -1,5 +1,4 @@
 import { useLayoutEffect, useState } from "react";
-import { upscale } from "./videoEncoder";
 
 interface ToolbarProps {
   initFileName: string;

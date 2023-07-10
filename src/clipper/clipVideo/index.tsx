@@ -37,6 +37,7 @@ export const ClipVideo = ({ src }: ClipVideoProps) => {
           <div
             className="draggable-slider"
             style={{
+              left: `${parseFloat(((startTime / duration) * 100).toFixed(2))}%`,
               width: `${parseFloat(
                 (((endTime - startTime) / duration) * 100).toFixed(2)
               )}%`,
@@ -54,12 +55,18 @@ export const ClipVideo = ({ src }: ClipVideoProps) => {
                     const { left, width } = sliderEl.getBoundingClientRect();
                     const radio =
                       duration *
-                      parseFloat((width / (e.clientX - left)).toFixed(2));
+                      parseFloat(
+                        Math.floor(e.clientX - left / width).toFixed(4)
+                      );
+                    //console.log(duration, radio, endTime);
                     setStartTime(Math.min(radio, endTime - 1));
                   }
                 }
               }}
               onMouseUp={() => {
+                moveFlag.current = false;
+              }}
+              onMouseLeave={() => {
                 moveFlag.current = false;
               }}
             >
@@ -88,12 +95,16 @@ export const ClipVideo = ({ src }: ClipVideoProps) => {
                     const { left, width } = sliderEl.getBoundingClientRect();
                     const radio =
                       duration *
-                      parseFloat((width / (e.clientX - left)).toFixed(2));
-                    setStartTime(Math.min(radio, endTime - 1));
+                      parseFloat(((e.clientX - left) / width).toFixed(4));
+                    //console.log(duration, radio, startTime);
+                    setEndTime(Math.max(radio, startTime + 1));
                   }
                 }
               }}
               onMouseUp={() => {
+                moveFlag.current = false;
+              }}
+              onMouseLeave={() => {
                 moveFlag.current = false;
               }}
             >

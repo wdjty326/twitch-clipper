@@ -31,7 +31,6 @@ module.exports = {
       "@Contents": path.resolve(__dirname, "..", "src", "contents"),
     },
   },
-  stats: "verbose",
   module: {
     rules: [
       {

@@ -6,3 +6,5 @@ dist
 
 # test
 test
+
+yarn-*.log

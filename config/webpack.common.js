@@ -10,7 +10,7 @@ const outputPath =
     : path.join(__dirname, "..", "dist");
 
 const tsconfigFileName =
-  NODE_ENV === "development" ? "tsconfig.dev.json" : "tsconfig.prod.json";
+  NODE_ENV === "development" ? "tsconfig.dev.json" : "tsconfig.json"; // vscode에서 tsconfig 설정 참조변경이 없음
 
 module.exports = {
   mode: NODE_ENV,

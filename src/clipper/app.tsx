@@ -104,7 +104,7 @@ const App: FunctionComponent = () => {
         <>
           <main>
 			{/** TODO::`videoURL`이 비어있을 경우 별도처리 코드 필요 */}
-            <ClipVideo src={videoUrl} />
+            <ClipVideo src={videoUrl} onClipVideo={() => null} />
           </main>
           <Toolbar url={videoUrl} initFileName={initFileName} />
         </>

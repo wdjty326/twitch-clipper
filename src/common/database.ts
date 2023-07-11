@@ -159,33 +159,13 @@ class TwitchClipDatabase {
         await new Promise<void>((resolve, reject) => {
           const request = this.db!.transaction(tempName, "readwrite")
             .objectStore(tempName)
-            .get(tabId);
+            .delete(tabId);
 
           request.onsuccess = () => resolve();
           request.onerror = (ev) => reject(ev);
         });
         break;
     }
-    await new Promise<void>((resolve, reject) => {
-      const request = this.db!.transaction(storeName, "readwrite")
-        .objectStore(storeName)
-        .index("index_by_tabId")
-        .getAll(tabId);
-
-      request.onsuccess = async () => {
-        for (const { id } of request.result) {
-          await new Promise<void>((resolve, reject) => {
-            const request = this.db!.transaction(storeName, "readwrite")
-              .objectStore(storeName)
-              .delete(id);
-            request.onsuccess = () => resolve();
-            request.onerror = (ev) => reject(ev);
-          });
-        }
-        resolve();
-      };
-      request.onerror = (ev) => reject(ev);
-    });
   }
 
   async select(

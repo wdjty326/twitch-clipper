@@ -12,6 +12,20 @@ export const ClipVideo = ({ src, onClipVideo }: ClipVideoProps) => {
   const sliderRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  const setClipVideo = (start: number, end: number) => {
+    const videoEl = videoRef.current;
+    const sliderEl = sliderRef.current;
+    if (videoEl && sliderEl) {
+      const startTime = Math.floor(
+        videoEl.duration * (start / sliderEl.offsetWidth)
+      );
+      const endTime = Math.floor(
+        videoEl.duration * (end / sliderEl.offsetWidth)
+      );
+      onClipVideo(startTime, endTime);
+    }
+  };
+
   const draggableSliderLeftPointerDown: React.PointerEventHandler<
     HTMLDivElement
   > = (e) => {
@@ -21,7 +35,9 @@ export const ClipVideo = ({ src, onClipVideo }: ClipVideoProps) => {
       if (sliderRef.current) {
         const sliderEl = sliderRef.current;
         const { left } = sliderEl.getBoundingClientRect();
-        setStartPointer(Math.min(Math.max(e.clientX - left, 0), endPointer));
+        const pointer = Math.min(Math.max(e.clientX - left, 0), endPointer);
+        setStartPointer(pointer);
+        setClipVideo(pointer, endPointer);
       }
     };
   };
@@ -35,12 +51,12 @@ export const ClipVideo = ({ src, onClipVideo }: ClipVideoProps) => {
       if (sliderRef.current) {
         const sliderEl = sliderRef.current;
         const { left } = sliderEl.getBoundingClientRect();
-        setEndPointer(
-          Math.max(
-            Math.min(e.clientX - left, sliderRef.current.offsetWidth),
-            startPointer
-          )
+        const pointer = Math.max(
+          Math.min(e.clientX - left, sliderRef.current.offsetWidth),
+          startPointer
         );
+        setEndPointer(pointer);
+        setClipVideo(startPointer, pointer);
       }
     };
   };

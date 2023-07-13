@@ -11,7 +11,7 @@ const sleep = (ms: number) =>
 // 초기화 스케줄러
 let openWindowIds: number[] = [];
 const clearTwitchClipTemp = async () => {
-  console.log("clear");
+  if (process.env.NODE_ENV === "development") console.log("clear");
   const windowIds: number[] = (await chrome.windows.getAll()).map(
     (window) => window.id!
   );

@@ -1,16 +1,13 @@
 import { useLayoutEffect, useState } from "react";
 
 interface ToolbarProps {
-  initFileName: string;
-  url: string;
+  channelId: string;
+  onSubmit(fileName: string): void;
 }
 
-export const Toolbar = ({
-  url,
-  initFileName,
-}: ToolbarProps) => {
-  const [fileName, setFileName] = useState<string>(initFileName);
-  useLayoutEffect(() => setFileName(initFileName), [initFileName]);
+export const Toolbar = ({ channelId, onSubmit }: ToolbarProps) => {
+  const [fileName, setFileName] = useState<string>(`${channelId}_${Date.now()}`);
+  useLayoutEffect(() => setFileName(`${channelId}_${Date.now()}`), [channelId]);
   return (
     <footer>
       <input
@@ -21,20 +18,7 @@ export const Toolbar = ({
           setFileName(target.value);
         }}
       />
-      <button
-        className="toolbar-button"
-        onClick={async () => {
-          if (fileName) {
-            await chrome.downloads.download({
-              url,
-			  
-              filename: `${encodeURIComponent(fileName)}.mp4`,
-              saveAs: true,
-              method: "GET",
-            });
-          }
-        }}
-      >
+      <button className="toolbar-button" onClick={() => onSubmit(fileName)}>
         다운로드
       </button>
     </footer>

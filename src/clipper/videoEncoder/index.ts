@@ -16,11 +16,17 @@ const ffmpeg = createFFmpeg({
   corePath,
   workerPath,
   // 전파처리
-  progress: ({ ratio }) => ProgressProvider._listeners.forEach((fn) => fn(Math.floor(ratio * 100))),
+  progress: ({ ratio }) =>
+    ProgressProvider._listeners.forEach((fn) => fn(Math.floor(ratio * 100))),
   mainName: "proxy_main",
   log: process.env.NODE_ENV === "development",
 });
 
+/**
+ * 영상조각을 합칩니다.
+ * @param logs
+ * @returns
+ */
 export const transcode = async (logs: LogInfo[]) => {
   try {
     if (!ffmpeg.isLoaded()) await ffmpeg.load();
@@ -36,7 +42,7 @@ export const transcode = async (logs: LogInfo[]) => {
 
     await ffmpeg.run(
       "-sseof",
-	  "-600", // 비디오의 마지막 10분만 유지
+      "-600", // 비디오의 마지막 10분만 유지
       "-i",
       `concat:${Array(n)
         .fill(0)
@@ -49,27 +55,58 @@ export const transcode = async (logs: LogInfo[]) => {
       "result.mp4"
     );
     const result = ffmpeg.FS("readFile", "result.mp4");
-    return await new Promise<Uint8Array>((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = reader.onerror = (ev) => {
-        if (ev.target?.result instanceof ArrayBuffer)
-          resolve(new Uint8Array(ev.target.result));
-        ffmpeg.exit();
-      };
-      reader.readAsArrayBuffer(
-        new Blob([result], {
-          type: "video/mp4",
-        })
-      );
-    });
+    return result;
   } catch (e) {
     console.error(e);
+  } finally {
     ffmpeg.exit();
   }
 
   return null;
 };
 
+/**
+ * 영상을 자릅니다.
+ * @param url
+ * @param start
+ * @param end
+ * @returns
+ */
+export const videoSlice = async (url: string, start: number, end: number) => {
+  try {
+    if (!ffmpeg.isLoaded()) {
+      await ffmpeg.load();
+    }
+
+    ffmpeg.FS("writeFile", "input.mp4", await fetchFile(url));
+    await ffmpeg.run(
+      "-i",
+      "input.mp4",
+	  "-acodec",
+      "copy",
+      "-vcodec",
+      "copy",
+      "-ss",
+      start.toString(),
+      "-to",
+      end.toString(),
+      "compress_cut.mp4"
+    );
+    const result = ffmpeg.FS("readFile", "compress_cut.mp4");
+    return result;
+  } catch (e) {
+    console.error(e);
+  } finally {
+    ffmpeg.exit();
+  }
+  return null;
+};
+
+/**
+ * 해상도를 변경합니다.
+ * @param url
+ * @returns
+ */
 export const upscale = async (url: string) => {
   try {
     if (!ffmpeg.isLoaded()) {
@@ -91,21 +128,11 @@ export const upscale = async (url: string) => {
       "compress_1080p.mp4"
     );
     const result = ffmpeg.FS("readFile", "compress_1080p.mp4");
-    return await new Promise<string>((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = reader.onerror = (ev) => {
-        resolve(ev.target?.result?.toString() || "");
-        ffmpeg.exit();
-      };
-      reader.readAsDataURL(
-        new Blob([result], {
-          type: "video/mp4",
-        })
-      );
-    });
+    return result;
   } catch (e) {
     console.error(e);
+  } finally {
     ffmpeg.exit();
   }
-  return "";
+  return null;
 };

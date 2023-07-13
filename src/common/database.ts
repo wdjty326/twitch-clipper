@@ -17,7 +17,7 @@ class TwitchClipDatabase {
     };
     request.onupgradeneeded = (event: any) => {
       this.db = event.target.result as IDBDatabase;
-      console.log("onupgradeneeded");
+      if (process.env.NODE_ENV === "development") console.log("onupgradeneeded");
       const store = this.db.createObjectStore(storeName, {
         keyPath: "id",
         autoIncrement: true,

@@ -1,16 +1,10 @@
 import { FunctionComponent } from "react";
-import ClipVideo from "./clipVideo";
-import Toolbar from "./toolbar";
-import Loader from "./loader";
-import { useLoaderTwitchClip } from "./hooks/app";
-import { useClipVideoSubmit } from "./hooks/submit";
+import { ClipVideo, Toolbar, Loader } from "@/renderer/components";
+import { useLoaderTwitchClip } from "@/renderer/hooks/app";
+import { useClipVideoSubmit } from "@/renderer/hooks/submit";
 
 const App: FunctionComponent = () => {
-  const {
-	channelId,
-	loading,
-	videoUrl,
-  } = useLoaderTwitchClip();
+  const { channelId, loading, videoUrl } = useLoaderTwitchClip();
 
   const { onClipVideoRange, onSubmit } = useClipVideoSubmit(videoUrl);
   return (
@@ -24,15 +18,9 @@ const App: FunctionComponent = () => {
         <>
           <main>
             {/** TODO::`videoURL`이 비어있을 경우 별도처리 코드 필요 */}
-            <ClipVideo
-              src={videoUrl}
-              onClipVideo={onClipVideoRange}
-            />
+            <ClipVideo src={videoUrl} onClipVideo={onClipVideoRange} />
           </main>
-          <Toolbar
-            channelId={channelId}
-            onSubmit={onSubmit}
-          />
+          <Toolbar channelId={channelId} onSubmit={onSubmit} />
         </>
       )}
     </div>

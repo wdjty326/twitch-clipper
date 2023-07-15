@@ -1,6 +1,7 @@
+import { LogInfo } from "@/renderer/defines";
+import { progressProvider } from "@/renderer/libs";
+
 import { createFFmpeg, fetchFile } from "./ffmpeg";
-import { LogInfo } from "../defines";
-import ProgressProvider from "./progress";
 
 const corePath = new URL(
   "ffmpeg-core.js",
@@ -17,7 +18,7 @@ const ffmpeg = createFFmpeg({
   workerPath,
   // 전파처리
   progress: ({ ratio }) =>
-    ProgressProvider._listeners.forEach((fn) => fn(Math.floor(ratio * 100))),
+    progressProvider._listeners.forEach((fn) => fn(Math.floor(ratio * 100))),
   mainName: "proxy_main",
   log: process.env.NODE_ENV === "development",
 });
@@ -82,7 +83,7 @@ export const videoSlice = async (url: string, start: number, end: number) => {
     await ffmpeg.run(
       "-i",
       "input.mp4",
-	  "-acodec",
+      "-acodec",
       "copy",
       "-vcodec",
       "copy",

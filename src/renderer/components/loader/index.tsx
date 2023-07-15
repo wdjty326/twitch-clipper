@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import progressProvider from "./videoEncoder/progress";
+import { progressProvider } from "@/renderer/libs";
+
+import "./loader.css";
 
 // https://codepen.io/hsucherng/pen/ndxGJq
 export const Loader = () => {

@@ -20,9 +20,9 @@ module.exports = merge(common, {
               encodeURIComponent(JSON.stringify(ansiColors)) +
               "&overlayStyles=" +
               encodeURIComponent(JSON.stringify(overlayStyles)),
-            path.resolve(__dirname, "..", "src", "contents", "index.ts"),
+            path.resolve(__dirname, "..", "src", "content", "index.ts"),
           ]
-        : path.resolve(__dirname, "..", "src", "contents", "index.ts"),
+        : path.resolve(__dirname, "..", "src", "content", "index.ts"),
   },
   devtool: process.env.NODE_ENV === "development" ? "source-map" : false,
   plugins:

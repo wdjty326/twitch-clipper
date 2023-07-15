@@ -9,15 +9,10 @@
     "allowJs": true,
     "checkJs": false,
     "moduleResolution": "node",
-    "rootDir": "src",
     "baseUrl": "./",
     "noEmitOnError": true,
     "paths": {
-      "@Background/*": ["background/*"],
-      "@Clipper/*": ["clipper/*"],
-      "@Common/*": ["common/*"],
-      "@Popup/*": ["popup/*"],
-      "@Contents/*": ["contents/*"]
+      "@/*": ["src/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"]

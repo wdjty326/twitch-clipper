@@ -24,11 +24,7 @@ module.exports = {
     extensions: [".ts", ".tsx", ".js", ".jsx"],
     modules: [path.resolve(__dirname, "src"), "node_modules"],
     alias: {
-      "@Background": path.resolve(__dirname, "..", "src", "background"),
-      "@Clipper": path.resolve(__dirname, "..", "src", "clipper"),
-      "@Common": path.resolve(__dirname, "..", "src", "common"),
-      "@Popup": path.resolve(__dirname, "..", "src", "popup"),
-      "@Contents": path.resolve(__dirname, "..", "src", "contents"),
+      "@": path.resolve(__dirname, "..", "src"),
     },
   },
   module: {

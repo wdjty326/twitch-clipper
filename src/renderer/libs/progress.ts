@@ -17,5 +17,4 @@ class ProgressProvider {
   }
 }
 
-const progressProvider = new ProgressProvider();
-export default progressProvider;
+export const progressProvider = new ProgressProvider();

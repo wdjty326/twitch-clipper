@@ -1,4 +1,4 @@
-import TwitchClipDatabase from "../common/database";
+import TwitchClipDatabase from "./database";
 
 export const webRequestListener = (
   callback?: (

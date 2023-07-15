@@ -1,7 +1,7 @@
 import { webRequestListener } from "./webRequest";
 
 import "./hot"; // Hot Module Reloader
-import TwitchClipDatabase from "../common/database";
+import TwitchClipDatabase from "./database";
 
 const sleep = (ms: number) =>
   new Promise<void>((resolve) => {

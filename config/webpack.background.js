@@ -12,5 +12,5 @@ const overlayStyles = {
 };
 
 module.exports = merge(common, {
-  entry: path.resolve(__dirname, "..", "src", "background", "index.ts"),
+  entry: path.resolve(__dirname, "..", "src", "main", "index.ts"),
 });

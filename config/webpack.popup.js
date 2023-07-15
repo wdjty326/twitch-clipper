@@ -1,5 +1,6 @@
 const path = require("path");
 const { merge } = require("webpack-merge");
+const { globSync } = require("glob");
 
 const common = require("./webpack.common.js");
 
@@ -7,13 +8,35 @@ const copyWebpackPlugin = require("copy-webpack-plugin");
 const htmlWebpackPlugin = require("html-webpack-plugin");
 const miniCssExtractPlugin = require("mini-css-extract-plugin");
 
+const entry = {};
+const htmlWebpackPlugins = [];
+globSync("src/renderer/routes/*/index.tsx").forEach((filePath) => {
+  const relativePath = filePath.substring(20);
+  const key = relativePath.substring(0, relativePath.indexOf("\\"));
+  entry[key] = path.resolve(
+    __dirname,
+    "..",
+    "src",
+    "renderer",
+    "routes",
+    relativePath
+  );
+
+  htmlWebpackPlugins.push(
+    new htmlWebpackPlugin({
+      filename: key + ".html",
+      template: path.resolve(__dirname, "..", "index.html"),
+      chunks: [key, "runtime"],
+      minify: false,
+      inject: false,
+    })
+  );
+});
+
 module.exports = merge(
   common,
   {
-    entry: {
-      popup: path.resolve(__dirname, "..", "src", "popup", "index.tsx"),
-      clipper: path.resolve(__dirname, "..", "src", "clipper", "index.tsx"),
-    },
+    entry,
     module: {
       rules: [
         {
@@ -32,12 +55,6 @@ module.exports = merge(
         maxInitialRequests: 30,
         enforceSizeThreshold: 50000,
         cacheGroups: {
-          scripts: {
-            name: "scripts",
-            test: /[\\/]node_modules[\\/]\@ffmpeg[\\/]/,
-            priority: -10,
-            reuseExistingChunk: true,
-          },
           runtime: {
             name: "runtime",
             test: /[\\/]node_modules[\\/]/,
@@ -66,20 +83,7 @@ module.exports = merge(
           },
         ],
       }),
-      new htmlWebpackPlugin({
-        filename: "popup.html",
-        template: path.resolve(__dirname, "..", "index.html"),
-        chunks: ["popup", "runtime"],
-        minify: false,
-        inject: false,
-      }),
-      new htmlWebpackPlugin({
-        filename: "clipper.html",
-        template: path.resolve(__dirname, "..", "index.html"),
-        chunks: ["clipper", "runtime", "scripts"],
-        minify: false,
-        inject: false,
-      }),
+      ...htmlWebpackPlugins,
     ],
   },
   {

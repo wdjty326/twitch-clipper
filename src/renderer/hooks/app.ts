@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { transcode } from "../videoEncoder";
+import { transcode } from "@/renderer/libs/videoEncoder";
 
-import TwitchClipDatabase from "../../common/database";
-import { LogInfo } from "../defines";
+import TwitchClipDatabase from "@/main/database"; // main 참조
+import { LogInfo } from "@/renderer/defines";
 
 type chromeEvent = (
   message: any,

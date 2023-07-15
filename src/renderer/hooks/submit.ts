@@ -1,5 +1,6 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { videoSlice } from "@/renderer/libs/videoEncoder";
+import { getDownloadURL } from "../libs/URL";
 
 export const useClipVideoSubmit = (videoUrl: string) => {
   const startTime = useRef<number>(0);
@@ -11,6 +12,8 @@ export const useClipVideoSubmit = (videoUrl: string) => {
   };
 
   const onSubmit = async (fileName: string = "1") => {
+    const atag = document.createElement("a");
+    atag.download = fileName;
     if (startTime.current !== 0 || endTime.current !== 0) {
       const stream = await videoSlice(
         videoUrl,
@@ -18,26 +21,17 @@ export const useClipVideoSubmit = (videoUrl: string) => {
         endTime.current
       );
       if (stream) {
-        const blob = new Blob([stream], { type: "video/mp4" });
-        const downloadURL = URL.createObjectURL(blob);
+        const downloadURL = await getDownloadURL(stream);
+        atag.href = downloadURL;
+		atag.click();
 
-        await chrome.downloads.download({
-          url: downloadURL,
-          filename: `${fileName}.mp4`,
-          saveAs: false,
-          method: "GET",
-        });
-        URL.revokeObjectURL(downloadURL);
+		URL.revokeObjectURL(downloadURL);
       }
       return;
+    } else {
+      atag.href = videoUrl;
+      atag.click();
     }
-
-    await chrome.downloads.download({
-      url: videoUrl,
-      filename: `${fileName}.mp4`,
-      saveAs: false,
-      method: "GET",
-    });
   };
 
   return {

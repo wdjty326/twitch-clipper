@@ -3,6 +3,7 @@ import { transcode } from "@/renderer/libs/videoEncoder";
 
 import TwitchClipDatabase from "@/main/database"; // main 참조
 import { LogInfo } from "@/renderer/defines";
+import { getDownloadURL } from "../libs/URL";
 
 type chromeEvent = (
   message: any,
@@ -12,7 +13,7 @@ type chromeEvent = (
 
 /**
  * 트위치 클립 정보를 가져옵니다.
- * @returns 
+ * @returns
  */
 export const useLoaderTwitchClip = () => {
   const [loading, setLoading] = useState<boolean>(false);
@@ -29,9 +30,9 @@ export const useLoaderTwitchClip = () => {
           currentWindow.id
         );
         if (message && "windowId" in message) {
-          const url = window.URL.createObjectURL(new Blob([message.dump]));
+          const url = await getDownloadURL(message.dump);
           setVideoUrl(url);
-		  setChannelId(message.channelId);
+          setChannelId(message.channelId);
         }
       }
     } catch (e) {
@@ -76,12 +77,10 @@ export const useLoaderTwitchClip = () => {
                 message.xProgramDateTime
               );
 
-              const url = window.URL.createObjectURL(
-                new Blob([transcodeData], { type: "video/mp4" })
-              );
+              const url = await getDownloadURL(transcodeData);
               setVideoUrl(url);
             }
-			setChannelId(message.channelId);
+            setChannelId(message.channelId);
           } catch (e) {
             console.error("TwitchClipTemp:select:", e);
           }

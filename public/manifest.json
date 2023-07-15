@@ -2,7 +2,7 @@
 	"manifest_version": 3,
 	"name": "Twitch Clip Downloader",
 	"description": "한국 VOD 차단 이후 트위치 클립을 다운받기 위한 확장프로그램 입니다.",
-	"version": "1.0",
+	"version": "1.0.1",
 	"permissions": [
 		"activeTab",
 		"background",

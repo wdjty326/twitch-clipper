@@ -1,6 +1,6 @@
 import "./hot"; // Hot Module Reloader
 import TwitchClipDatabase from "./database";
-//import { webRequestListener } from "./webRequest";
+import { webRequestListener } from "./webRequest";
 
 const sleep = (ms: number) =>
   new Promise<void>((resolve) => {
@@ -104,5 +104,5 @@ chrome.runtime.onInstalled.addListener(function () {
     })();
   });
 
-  //  webRequestListener();
+  webRequestListener();
 });

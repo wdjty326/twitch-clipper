@@ -92,7 +92,7 @@ import "./hot";
             const videoPlayer = target.children[0] as HTMLMediaElement;
             if (videoPlayer?.nodeName === "VIDEO") {
               videoPlayer.addEventListener("playing", () => {
-                setMediaRecorder(videoPlayer);
+                //setMediaRecorder(videoPlayer); TODO::안정화전까지미사용
               });
             }
           }

@@ -32,23 +32,39 @@ export const transcode = async (logs: LogInfo[]) => {
   try {
     if (!ffmpeg.isLoaded()) await ffmpeg.load();
     let n = 0;
-    for (const { url, dump } of logs) {
-      try {
-        ffmpeg.FS("writeFile", `${n}.ts`, dump || (await fetchFile(url)));
-        n++;
-      } catch (e) {
-        console.error(e, url);
-      }
-    }
+    const stream = await new Promise<Uint8Array>((resolve, reject) => {
+      const blob = new Blob(
+        logs.filter((log) => log.dump).map((log) => log.dump!)
+      );
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        if (ev.target?.result) {
+          resolve(new Uint8Array(ev.target.result as ArrayBuffer));
+        } else reject(null);
+      };
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(blob);
+    });
+    ffmpeg.FS("writeFile", "dump.ts", stream);
+    //for (const { url, dump } of logs) {
+    //  try {
+    //	dump
+    //    ffmpeg.FS("writeFile", `${n}.ts`, dump || (await fetchFile(url)));
+    //    n++;
+    //  } catch (e) {
+    //    console.error(e, url);
+    //  }
+    //}
 
     await ffmpeg.run(
       "-sseof",
       "-600", // 비디오의 마지막 10분만 유지
       "-i",
-      `concat:${Array(n)
-        .fill(0)
-        .map((_, index) => `${index}.ts`)
-        .join("|")}`,
+      "dump.ts",
+      //  `concat:${Array(n)
+      //    .fill(0)
+      //    .map((_, index) => `${index}.ts`)
+      //    .join("|")}`,
       "-acodec",
       "copy",
       "-vcodec",

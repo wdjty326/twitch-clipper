@@ -1,72 +1,106 @@
+import "./hotkey";
 import "./hot";
 
-const createClipDownloadButton = () => {
-	const clipLayoutElement = document.createElement("div");
-	const clipButton = document.createElement("button");
-	clipButton.onclick = () => {
-		chrome.runtime.sendMessage({ command: "run-foo" }, (response) => {
-			console.log(response);
-		})
-	};
+(function () {
+  let mediaStream: MediaStream | null = null;
+  let mediaRecorder: MediaRecorder | null = null;
+  let threadId: number = 0;
 
-	clipLayoutElement.append(clipButton);
-	return clipLayoutElement;
-}
+  const createClipDownloadButton = () => {
+    const clipLayoutElement = document.createElement("div");
+    const clipButton = document.createElement("button");
+    clipButton.onclick = () => {
+      chrome.runtime.sendMessage({ command: "run-foo" }, (response) => {
+        console.log(response);
+      });
+    };
 
-document.addEventListener("DOMContentLoaded", () => {
-	const channelPlayer = document.getElementById("channel-player");
-	if (!channelPlayer) return console.error("not found channel player");
+    clipLayoutElement.append(clipButton);
+    return clipLayoutElement;
+  };
 
-	const rightControlGroup = channelPlayer.querySelector(".player-controls__right-control-group");
-	if (!rightControlGroup) return console.error("not found right control group")
+  const setMediaRecorder = (videoPlayer: HTMLMediaElement) => {
+    if (!("captureStream" in videoPlayer))
+      return console.error("captureStream not support");
+    if (mediaRecorder !== null) mediaRecorder.stop();
 
-	rightControlGroup.append(createClipDownloadButton());
-});
+    mediaStream = (videoPlayer as any).captureStream() as MediaStream;
+    const options = { mimeType: "video/webm; codecs=vp9" };
+    mediaRecorder = new MediaRecorder(mediaStream, options);
+    mediaRecorder.addEventListener("dataavailable", (ev) => {
+      if (ev.data) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          if (ev.target?.result) {
+            chrome.runtime.sendMessage(
+              {
+                command: "push-packet",
+                result: Array.from(
+                  new Uint8Array(ev.target.result as ArrayBuffer)
+                ),
+              },
+              (response) => {
+                if (response !== "ok") console.log(response);
+              }
+            );
+          }
+          // TODO:: 에러처리필요
+        };
+        reader.readAsArrayBuffer(ev.data);
+      }
+    });
+    mediaRecorder.addEventListener("start", (ev) => {
+      console.log("start media recorder");
+      chrome.runtime.sendMessage({ command: "start-packet" }, (response) => {
+        console.log(response);
+      });
+    });
+    mediaRecorder.addEventListener("stop", (ev) => {
+      console.log("stop media recorder");
+        window.clearInterval(threadId);
+      chrome.runtime.sendMessage({ command: "stop-packet" }, (response) => {
+        console.log(response);
+      });
+    });
+    // TODO::가져오기처리
+    mediaRecorder.start();
+    threadId = window.setInterval(() => {
+      mediaRecorder && mediaRecorder.requestData();
+    }, 500);
+  };
 
+  const videoPlayerOverlay = document.querySelector(
+    "div[data-a-target=video-player]"
+  );
+  if (!videoPlayerOverlay) return;
 
-// command 사용시 확장프로그램 충돌로 직접 키를 입력받도록 처리
-document.addEventListener("keydown", (event) => {
-	const inputKeys = [];
-	if (event.ctrlKey) inputKeys.push("Control");
-	if (event.metaKey) inputKeys.push("Command");
-	if (event.shiftKey) inputKeys.push("Shift");
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      try {
+        if (mutation.type === "childList") {
+          const target = mutation.target as HTMLElement;
+          //  if (
+          //    target.nodeName === "DIV" &&
+          //    target.className.includes("player-controls__right-control-group")
+          //  )
+          //    target.append(createClipDownloadButton());
 
-	inputKeys.push(event.key);
-
-	const commandLine = inputKeys.join("+");
-	if (commandLine === ["Control", "Shift", "X"].join("+") || // Mac 대응
-		commandLine === ["Command", "Shift", "X"].join("+")
-	) {
-		chrome.runtime.sendMessage({ command: "run-foo" }, (response) => {
-			console.log(response);
-		})
-	}
-});
-
-// const videoPlayer = document.querySelector("video");
-// console.log(videoPlayer);
-// const observer = new MutationObserver((mutations) => {
-//   mutations.forEach((mutation) => {
-//     if (mutation.type === "childList") {
-//       mutation.addedNodes.forEach((node) => {
-//         if (node.nodeName === "VIDEO") {
-//           (node as HTMLVideoElement).addEventListener("playing", () => {
-//             const stream = (node as any).captureStream() as MediaStream;
-//             const options = { mimeType: "video/webm; codecs=vp9" };
-//             const mediaRecorder = new MediaRecorder(stream, options);
-
-//             mediaRecorder.addEventListener("dataavailable", (ev) => {
-//               console.log(ev.data);
-//             });
-//             mediaRecorder.start();
-//           });
-//         }
-//       });
-//     }
-//   });
-// });
-
-// observer.observe(videoPlayer!, {
-//   childList: true,
-//   subtree: true,
-// });
+          if (
+            target.nodeName === "DIV" &&
+            target.className.includes("video-ref")
+          ) {
+            const videoPlayer = target.children[0] as HTMLMediaElement;
+            if (videoPlayer?.nodeName === "VIDEO") {
+              videoPlayer.addEventListener("playing", () => {
+                setMediaRecorder(videoPlayer);
+              });
+            }
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    });
+  });
+  observer.observe(videoPlayerOverlay, { subtree: true, childList: true });
+})();

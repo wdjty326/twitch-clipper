@@ -14,17 +14,6 @@
 	"icons": {
 		"32": "icon-32.png"
 	},
-	"commands": {
-		"run-foo": {
-			"suggested_key": {
-				"default": "Ctrl+Shift+X",
-				"mac": "Command+Shift+X",
-				"chromeos": "Ctrl+Shift+X",
-				"linux": "Ctrl+Shift+X"
-			},
-			"description": "Run \"foo\" on the current page."
-		}
-	},
 	"content_scripts": [
 		{
 			"matches": [

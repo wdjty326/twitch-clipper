@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { transcode } from "@/renderer/libs/videoEncoder";
 
 import TwitchClipDatabase from "@/main/database"; // main 참조
@@ -20,30 +20,7 @@ export const useLoaderTwitchClip = () => {
   const [videoUrl, setVideoUrl] = useState<string>("");
   const [channelId, setChannelId] = useState<string>("");
 
-  const LoadTwitchClipTemp = async () => {
-    try {
-      setLoading(true);
-      const currentWindow = await chrome.windows.getCurrent();
-      if (currentWindow.id) {
-        const message = await TwitchClipDatabase.select(
-          "TwitchClipTemp",
-		  "",
-          currentWindow.id
-        );
-        if (message && "windowId" in message) {
-          const url = await getDownloadURL(message.dump);
-          setVideoUrl(url);
-          setChannelId(message.channelId);
-        }
-      }
-    } catch (e) {
-      // TODO::사용자 에러 노출처리를 추후작업
-      console.error("TwitchClipTemp:select:", e);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
+  useLayoutEffect(() => {
     const callback: chromeEvent = async (message: {
       tabId: number;
       windowId: number;
@@ -60,7 +37,7 @@ export const useLoaderTwitchClip = () => {
           try {
             const result = await TwitchClipDatabase.select(
               "TwitchClip",
-			  "index_by_tabId",
+              "index_by_tabId",
               message.tabId
             );
             transcodeData = await transcode(result as LogInfo[]);
@@ -91,11 +68,41 @@ export const useLoaderTwitchClip = () => {
       setLoading(false);
     };
 
-    LoadTwitchClipTemp();
     chrome.runtime.onMessage.addListener(callback);
-    return () => {
-      chrome.runtime.onMessage.removeListener(callback);
+    return () => chrome.runtime.onMessage.removeListener(callback);
+  }, []);
+
+  useLayoutEffect(() => {
+	let workerId: number = 0;
+    const LoadTwitchClipTemp = async () => {
+      if (videoUrl) return; // 이미 데이터를 가져온 경우 
+      if (loading) return (workerId = window.setTimeout(LoadTwitchClipTemp, 3000)); // 로딩대기중인 상태면 실행대기상태로 돌림
+
+      setLoading(true);
+      try {
+        const currentWindow = await chrome.windows.getCurrent();
+        if (currentWindow.id) {
+          const message = await TwitchClipDatabase.select(
+            "TwitchClipTemp",
+            "",
+            currentWindow.id
+          );
+          if (message && "windowId" in message) {
+            const url = await getDownloadURL(message.dump);
+            setVideoUrl(url);
+            setChannelId(message.channelId);
+          }
+        }
+      } catch (e) {
+        // TODO::사용자 에러 노출처리를 추후작업
+        console.error("TwitchClipTemp:select:", e);
+      }
+      setLoading(false);
     };
+
+    // `onMessage` 를 대기합니다.
+    workerId = window.setTimeout(LoadTwitchClipTemp, 3000);
+    return () => window.clearTimeout(workerId);
   }, []);
 
   return {

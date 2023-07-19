@@ -47,30 +47,17 @@ chrome.runtime.onInstalled.addListener(function () {
             : tabs[0].url!.lastIndexOf("?")
         );
 
-		// 페이지 state 가 normal이 된이후에 window 정보 전달
-        const window = await new Promise<chrome.windows.Window>(
-          async (resolve, reject) => {
-            try {
-              const listener = (window: chrome.windows.Window) => {
-                chrome.windows.onCreated.removeListener(listener);
-                resolve(window);
-              };
-              chrome.windows.onCreated.addListener(listener);
-              chrome.windows.create({
-                url: `chrome-extension://${chrome.runtime.id}/clipper.html`,
-                width: 520,
-                height: 492,
-                type: "popup",
-              });
-            } catch (e) {
-              reject(e);
-            }
-          }
-        );
+        // 페이지 state 가 normal이 된이후에 window 정보 전달
+        const window = await chrome.windows.create({
+          url: `chrome-extension://${chrome.runtime.id}/clipper.html`,
+          width: 520,
+          height: 492,
+          type: "popup",
+        });
 
         clearTwitchClipTemp();
 
-		await sleep(1000); // waiting
+        await sleep(1000); // waiting
         await chrome.runtime.sendMessage({
           windowId: window.id,
           tabId,

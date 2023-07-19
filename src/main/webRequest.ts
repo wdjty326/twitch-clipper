@@ -1,5 +1,15 @@
 import TwitchClipDatabase from "./database";
 
+// 기존의 insert 내에 있던 url 체크로직과 분리함
+const checkInsertData = async (url: string, id: number) => {
+  const list = await TwitchClipDatabase.select(
+    "TwitchClip",
+    "index_by_url",
+    url
+  );
+  return Array.isArray(list) && list.filter(({ tabId }) => tabId === id).length === 0;
+};
+
 export const webRequestListener = (
   callback?: (
     details: chrome.webRequest.WebRequestHeadersDetails,
@@ -17,8 +27,15 @@ export const webRequestListener = (
     delete temp[requestId].timeStamp;
 
     if (/^https:\/\/.+\.hls\.ttvnw\.net\/(.+)\.ts$/.test(details.url)) {
-      fetch(details.url)
-        .then((response) => response.arrayBuffer())
+      checkInsertData(details.url, details.tabId)
+        .then((result) => {
+          if (result) return fetch(details.url);
+          return null;
+        })
+        .then((response) => {
+          if (response) return response.arrayBuffer();
+          return new ArrayBuffer(0);
+        })
         .then(async (buffer) => {
           try {
             if (buffer.byteLength !== 0) {
@@ -29,11 +46,13 @@ export const webRequestListener = (
                 new Uint8Array(buffer),
                 new Date(details.timeStamp).toISOString()
               );
-              if (callback) callback(details);
             }
           } catch (e) {
             console.error(e);
           }
+        })
+        .finally(() => {
+          if (callback) callback(details);
         });
     }
   };

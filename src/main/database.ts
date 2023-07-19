@@ -17,7 +17,8 @@ class TwitchClipDatabase {
     };
     request.onupgradeneeded = (event: any) => {
       this.db = event.target.result as IDBDatabase;
-      if (process.env.NODE_ENV === "development") console.log("onupgradeneeded");
+      if (process.env.NODE_ENV === "development")
+        console.log("onupgradeneeded");
       const store = this.db.createObjectStore(storeName, {
         keyPath: "id",
         autoIncrement: true,
@@ -51,20 +52,6 @@ class TwitchClipDatabase {
       // type이 TwitchClip이면 아래로직 추가
       switch (type) {
         case "TwitchClip":
-          const isUpdated = await new Promise<boolean>((resolve, reject) => {
-            const request = this.db!.transaction(storeName, "readonly")
-              .objectStore(storeName)
-              .index("index_by_url")
-              .get(url);
-
-            request.onsuccess = () => {
-              if (!request.result) resolve(true);
-              else resolve(false);
-            };
-            request.onerror = (ev) => reject(ev);
-          });
-          if (!isUpdated) return;
-
           await new Promise<boolean>((resolve, reject) => {
             const request = this.db!.transaction(storeName, "readwrite")
               .objectStore(type)
@@ -170,7 +157,8 @@ class TwitchClipDatabase {
 
   async select(
     type: typeof storeName | typeof tempName = "TwitchClip",
-    tabId: number
+    indexKey: "index_by_tabId" | "index_by_url" | "",
+    tabId: number | string
   ) {
     if (!this.db) await sleep(1000);
 
@@ -186,7 +174,7 @@ class TwitchClipDatabase {
         >((resolve, reject) => {
           const request = this.db!.transaction(storeName, "readwrite")
             .objectStore(storeName)
-            .index("index_by_tabId")
+            .index(indexKey)
             .getAll(tabId);
 
           request.onsuccess = () => {

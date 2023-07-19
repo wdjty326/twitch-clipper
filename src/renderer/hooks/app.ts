@@ -27,6 +27,7 @@ export const useLoaderTwitchClip = () => {
       if (currentWindow.id) {
         const message = await TwitchClipDatabase.select(
           "TwitchClipTemp",
+		  "",
           currentWindow.id
         );
         if (message && "windowId" in message) {
@@ -59,6 +60,7 @@ export const useLoaderTwitchClip = () => {
           try {
             const result = await TwitchClipDatabase.select(
               "TwitchClip",
+			  "index_by_tabId",
               message.tabId
             );
             transcodeData = await transcode(result as LogInfo[]);
